@@ -33,3 +33,51 @@ Use for tasks involving workload deployment, containers, services, ingress, TLS,
 사용자가 GPU 할당 등 `platform.py`나 `schema`에서 지원하지 않는 리소스를 요청할 경우:
 - 임의로 YAML을 우회 생성하여 적용하려 하지 마십시오 (Do not work around).
 - 즉시 작업을 중지(STOP)하고 "현재 Homelab Workload Contract에서 해당 기능을 지원하지 않으므로 Base Chart 확장이 필요합니다"라고 사용자에게 보고하십시오.
+
+## 5. 고급 설정 스펙 (ConfigMap, Env, Volumes) 작성 규약
+패치(`patch`)를 통해 환경변수나 설정 파일을 주입할 때는 K8s 원시 리소스(YAML) 형식이 아닌, 아래의 **JSON Contract** 구조를 반드시 준수하십시오.
+특히 ConfigMap의 `data`는 반드시 단순한 **키-값(Key-Value) 쌍의 객체(Object)** 여야 합니다.
+
+**[올바른 JSON 패치 작성 예시]**
+```json
+{
+  "configMaps": [
+    {
+      "name": "app-config",
+      "data": {
+        "application.yml": "server:\n  port: 8080",
+        "CUSTOM_VAR": "my-value"
+      }
+    }
+  ],
+  "workload": {
+    "volumes": [
+      {
+        "name": "config-vol",
+        "configMap": { "name": "app-config" }
+      }
+    ],
+    "containers": [
+      {
+        "name": "app",
+        "env": [
+          {
+            "name": "DB_PASSWORD",
+            "secretKeyRef": { "name": "shared-db-app", "key": "password" }
+          }
+        ],
+        "envFrom": [
+          { "configMapRef": { "name": "app-config" } }
+        ],
+        "volumeMounts": [
+          {
+            "name": "config-vol",
+            "mountPath": "/app/config",
+            "readOnly": true
+          }
+        ]
+      }
+    ]
+  }
+}
+```
