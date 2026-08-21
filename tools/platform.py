@@ -49,6 +49,11 @@ def app_create(args):
         values["database"] = {
             "name": args.db_name
         }
+        
+    if getattr(args, 'file', None):
+        with open(args.file, 'r') as f:
+            user_data = json.load(f)
+        dict_merge(values, user_data)
     
     val_file = wl_dir / "values.json"
     val_file.write_text(json.dumps(values, indent=2))
@@ -186,6 +191,7 @@ def main():
     parser_create.add_argument("--kind", default="deployment")
     parser_create.add_argument("--image", required=True)
     parser_create.add_argument("--db-name", help="DB name to create/connect")
+    parser_create.add_argument("--file", help="JSON file to apply initial configuration all at once")
     
     parser_patch = subparsers.add_parser("patch")
     parser_patch.add_argument("name")
