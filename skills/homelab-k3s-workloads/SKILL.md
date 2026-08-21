@@ -43,18 +43,24 @@ Use for tasks involving workload deployment, containers, services, ingress, TLS,
 {
   "configMaps": [
     {
-      "name": "app-config",
+      "name": "env-config",
       "data": {
-        "application.yml": "server:\n  port: 8080",
-        "CUSTOM_VAR": "my-value"
+        "LOG_LEVEL": "info",
+        "ENABLE_FEATURE_X": "true"
+      }
+    },
+    {
+      "name": "file-config",
+      "data": {
+        "nginx.conf": "server { listen 80; ... }"
       }
     }
   ],
   "workload": {
     "volumes": [
       {
-        "name": "config-vol",
-        "configMap": { "name": "app-config" }
+        "name": "nginx-conf-vol",
+        "configMap": { "name": "file-config" }
       }
     ],
     "containers": [
@@ -67,12 +73,13 @@ Use for tasks involving workload deployment, containers, services, ingress, TLS,
           }
         ],
         "envFrom": [
-          { "configMapRef": { "name": "app-config" } }
+          { "configMapRef": { "name": "env-config" } }
         ],
         "volumeMounts": [
           {
-            "name": "config-vol",
-            "mountPath": "/app/config",
+            "name": "nginx-conf-vol",
+            "mountPath": "/etc/nginx/nginx.conf",
+            "subPath": "nginx.conf",
             "readOnly": true
           }
         ]
