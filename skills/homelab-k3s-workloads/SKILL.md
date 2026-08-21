@@ -16,7 +16,7 @@ Use for tasks involving workload deployment, containers, services, ingress, TLS,
 ## 2. 작업 순서 (Workflow Protocol)
 1. 작업 시작 전 `platform.py doctor` (또는 `platform.py --help`) 실행
 2. 기존 워크로드 수정 시 `platform.py app get <app_name>`으로 현재 JSON 스펙 확인
-3. 생성은 **반드시** `platform.py app create <app_name> --kind <kind> --image <image>` 사용
+3. 생성은 **반드시** `platform.py app create <app_name> --kind <kind> --image <image>` 사용 (DB가 필요한 경우 `--db-name <db_name>`을 반드시 포함할 것)
 4. 변경은 **반드시** 파일 기반 패치 사용 (`platform.py app patch <app_name> --file <json-file>`)
 5. 변경 후 `platform.py app validate <app_name>`으로 이상 유무 검증
 

@@ -45,6 +45,10 @@ def app_create(args):
             ]
         }
     }
+    if args.db_name:
+        values["database"] = {
+            "name": args.db_name
+        }
     
     val_file = wl_dir / "values.json"
     val_file.write_text(json.dumps(values, indent=2))
@@ -181,6 +185,7 @@ def main():
     parser_create.add_argument("name")
     parser_create.add_argument("--kind", default="deployment")
     parser_create.add_argument("--image", required=True)
+    parser_create.add_argument("--db-name", help="DB name to create/connect")
     
     parser_patch = subparsers.add_parser("patch")
     parser_patch.add_argument("name")

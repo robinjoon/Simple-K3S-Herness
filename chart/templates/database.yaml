@@ -1,0 +1,12 @@
+{{- if .Values.database }}
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: {{ .Values.metadata.name }}-db
+  namespace: database-system
+spec:
+  name: {{ .Values.database.name }}
+  owner: {{ .Values.database.owner | default "defaultuser" }}
+  cluster:
+    name: shared-db
+{{- end }}

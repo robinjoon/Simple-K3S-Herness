@@ -27,5 +27,20 @@ spec:
               containerPort: {{ .containerPort }}
           {{- end }}
           {{- end }}
+          {{- if .env }}
+          env:
+          {{- range .env }}
+            - name: {{ .name }}
+              {{- if .value }}
+              value: {{ .value | quote }}
+              {{- end }}
+              {{- if .secretKeyRef }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .secretKeyRef.name }}
+                  key: {{ .secretKeyRef.key }}
+              {{- end }}
+          {{- end }}
+          {{- end }}
       {{- end }}
 {{- end }}

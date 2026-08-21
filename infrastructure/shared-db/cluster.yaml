@@ -1,0 +1,16 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: shared-db
+  namespace: database-system
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:17
+  
+  storage:
+    size: 20Gi
+    
+  bootstrap:
+    initdb:
+      database: defaultdb
+      owner: defaultuser

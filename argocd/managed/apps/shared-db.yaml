@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shared-db
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "5" # Operator 생성 이후(CRD가 존재해야 함)에 실행되도록 wave 설정
+spec:
+  project: homelab-workloads
+  source:
+    repoURL: https://github.com/imsubin/Simple-K3S-Herness.git
+    targetRevision: main
+    path: infrastructure/shared-db
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: database-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
