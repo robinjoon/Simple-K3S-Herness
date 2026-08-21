@@ -1,0 +1,32 @@
+{{- range .Values.ingresses }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $.Values.metadata.name }}-{{ .name }}
+  namespace: {{ $.Values.metadata.namespace }}
+spec:
+  {{- if and .tls (eq .tls.mode "cert-manager") }}
+  tls:
+    - hosts:
+      {{- range .rules }}
+        - {{ .host }}
+      {{- end }}
+      secretName: {{ $.Values.metadata.name }}-{{ .name }}-tls
+  {{- end }}
+  rules:
+  {{- range .rules }}
+    - host: {{ .host }}
+      http:
+        paths:
+        {{- range .paths }}
+          - path: {{ .path }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Values.metadata.name }}-{{ $.service | default .servicePort }}
+                port:
+                  name: {{ .servicePort }}
+        {{- end }}
+  {{- end }}
+{{- end }}

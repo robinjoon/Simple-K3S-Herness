@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: homelab-workloads
+  namespace: argocd
+spec:
+  description: Project for homelab AI workloads
+  sourceRepos:
+    - "*"
+  destinations:
+    - namespace: "*"
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: "apps"
+      kind: "Deployment"
+    - group: "apps"
+      kind: "StatefulSet"
+    - group: "apps"
+      kind: "DaemonSet"
+    - group: "batch"
+      kind: "CronJob"
+    - group: ""
+      kind: "Service"
+    - group: ""
+      kind: "ConfigMap"
+    - group: ""
+      kind: "PersistentVolumeClaim"
+    - group: ""
+      kind: "ServiceAccount"
+    - group: "networking.k8s.io"
+      kind: "Ingress"
+    - group: "networking.k8s.io"
+      kind: "NetworkPolicy"
+    - group: "cert-manager.io"
+      kind: "Certificate"
+    - group: "rbac.authorization.k8s.io"
+      kind: "Role"
+    - group: "rbac.authorization.k8s.io"
+      kind: "RoleBinding"
+    - group: "autoscaling"
+      kind: "HorizontalPodAutoscaler"
+    - group: "policy"
+      kind: "PodDisruptionBudget"

@@ -1,0 +1,19 @@
+{{- range .Values.services }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Values.metadata.name }}-{{ .name }}
+  namespace: {{ $.Values.metadata.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ $.Values.metadata.name }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ $.Values.metadata.name }}
+  ports:
+  {{- range .ports }}
+    - name: {{ .name }}
+      port: {{ .port }}
+      targetPort: {{ .targetPort }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contractVersion", "metadata", "workload"],
+  "properties": {
+    "contractVersion": { "type": "integer", "enum": [1] },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "namespace"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 63 },
+        "namespace": { "type": "string", "minLength": 1, "maxLength": 63 }
+      }
+    },
+    "workload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "containers"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["deployment", "statefulset", "daemonset", "cronjob"] },
+        "replicas": { "type": "integer", "minimum": 0 },
+        "containers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "image"],
+            "properties": {
+              "name": { "type": "string" },
+              "image": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["repository", "tag"],
+                "properties": {
+                  "repository": { "type": "string" },
+                  "tag": { "type": "string" }
+                }
+              },
+              "ports": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["name", "containerPort"],
+                  "properties": {
+                    "name": { "type": "string" },
+                    "containerPort": { "type": "integer", "minimum": 1, "maximum": 65535 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "services": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "ports"],
+        "properties": {
+          "name": { "type": "string" },
+          "ports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name", "port", "targetPort"],
+              "properties": {
+                "name": { "type": "string" },
+                "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+                "targetPort": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ingresses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "service", "rules"],
+        "properties": {
+          "name": { "type": "string" },
+          "service": { "type": "string" },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["host", "paths"],
+              "properties": {
+                "host": { "type": "string" },
+                "paths": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["path", "servicePort"],
+                    "properties": {
+                      "path": { "type": "string" },
+                      "servicePort": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "tls": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "mode": { "type": "string", "enum": ["cert-manager", "existing-secret"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}

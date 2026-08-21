@@ -1,0 +1,13 @@
+{
+  "platform": {
+    "ingress": {
+      "className": "traefik"
+    },
+    "certManager": {
+      "issuerRef": {
+        "name": "letsencrypt-prod",
+        "kind": "ClusterIssuer"
+      }
+    }
+  }
+}
