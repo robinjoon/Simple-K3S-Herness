@@ -8,7 +8,7 @@ metadata:
 spec:
   project: homelab-workloads
   source:
-    repoURL: https://github.com/imsubin/Simple-K3S-Herness.git
+    repoURL: https://github.com/robinjoon/Simple-K3S-Herness.git
     targetRevision: main
     path: infrastructure/shared-db
   destination:

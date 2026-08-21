@@ -85,7 +85,7 @@ def app_create(args):
         "spec": {
             "project": "homelab-workloads",
             "source": {
-                "repoURL": "https://github.com/imsubin/Simple-K3S-Herness.git", # Example repo
+                "repoURL": "https://github.com/robinjoon/Simple-K3S-Herness.git", # Example repo
                 "targetRevision": "main",
                 "path": "chart",
                 "helm": {
@@ -118,7 +118,7 @@ metadata:
 spec:
   project: homelab-workloads
   source:
-    repoURL: https://github.com/imsubin/Simple-K3S-Herness.git
+    repoURL: https://github.com/robinjoon/Simple-K3S-Herness.git
     targetRevision: main
     path: chart
     helm:

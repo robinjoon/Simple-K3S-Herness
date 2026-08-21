@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/imsubin/Simple-K3S-Herness.git
+    repoURL: https://github.com/robinjoon/Simple-K3S-Herness.git
     targetRevision: HEAD
     path: argocd/managed
   destination:
