@@ -40,7 +40,53 @@ spec:
                   name: {{ .secretKeyRef.name }}
                   key: {{ .secretKeyRef.key }}
               {{- end }}
+              {{- if .configMapKeyRef }}
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ $.Values.metadata.name }}-{{ .configMapKeyRef.name }}
+                  key: {{ .configMapKeyRef.key }}
+              {{- end }}
           {{- end }}
           {{- end }}
+          {{- if .envFrom }}
+          envFrom:
+          {{- range .envFrom }}
+            {{- if .configMapRef }}
+            - configMapRef:
+                name: {{ $.Values.metadata.name }}-{{ .configMapRef.name }}
+            {{- end }}
+            {{- if .secretRef }}
+            - secretRef:
+                name: {{ .secretRef.name }}
+            {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- if .volumeMounts }}
+          volumeMounts:
+          {{- range .volumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if hasKey . "readOnly" }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+          {{- end }}
+          {{- end }}
+      {{- end }}
+      {{- if .Values.workload.volumes }}
+      volumes:
+      {{- range .Values.workload.volumes }}
+        - name: {{ .name }}
+          {{- if .configMap }}
+          configMap:
+            name: {{ $.Values.metadata.name }}-{{ .configMap.name }}
+          {{- end }}
+          {{- if .secret }}
+          secret:
+            secretName: {{ .secret.secretName }}
+          {{- end }}
+      {{- end }}
       {{- end }}
 {{- end }}
