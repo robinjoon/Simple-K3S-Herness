@@ -1,0 +1,10 @@
+# IDE
+.idea/
+*.iml
+
+# OS
+.DS_Store
+
+# Temporary
+*.tmp
+*.log
