@@ -54,7 +54,22 @@ def app_create(args):
         with open(args.file, 'r') as f:
             user_data = json.load(f)
         dict_merge(values, user_data)
-    
+        
+    # Validate before saving
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp:
+        json.dump(values, tmp)
+        tmp_path = tmp.name
+        
+    res = run_cmd(["helm", "lint", str(CHART_DIR), "-f", tmp_path])
+    if res.returncode != 0:
+        print("Validation failed during create!")
+        print(res.stdout)
+        print(res.stderr)
+        # Cleanup created dir on failure
+        import shutil
+        shutil.rmtree(wl_dir)
+        sys.exit(1)
+        
     val_file = wl_dir / "values.json"
     val_file.write_text(json.dumps(values, indent=2))
     
