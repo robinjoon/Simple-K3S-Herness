@@ -80,6 +80,23 @@ class ZotApplicationTest(unittest.TestCase):
         self.assertNotIn("type: NodePort", application)
         self.assertNotIn("type: LoadBalancer", application)
 
+    def test_ignores_only_kubernetes_defaulted_pvc_typemeta(self):
+        application = self.application
+
+        self.assertIn(
+            """  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      name: zot
+      namespace: registry-system
+      jqPathExpressions:
+        - ".spec.volumeClaimTemplates[]?.apiVersion"
+        - ".spec.volumeClaimTemplates[]?.kind"
+""",
+            application,
+        )
+        self.assertIn("- RespectIgnoreDifferences=true", application)
+
     def test_uses_external_htpasswd_and_single_full_access_acl(self):
         application = self.application
         http = self.config["http"]

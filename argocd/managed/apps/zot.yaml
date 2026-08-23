@@ -141,6 +141,14 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: registry-system
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      name: zot
+      namespace: registry-system
+      jqPathExpressions:
+        - ".spec.volumeClaimTemplates[]?.apiVersion"
+        - ".spec.volumeClaimTemplates[]?.kind"
   syncPolicy:
     automated:
       prune: true
@@ -148,3 +156,4 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
