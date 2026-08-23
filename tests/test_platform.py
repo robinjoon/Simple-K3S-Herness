@@ -20,7 +20,7 @@ class PlatformTest(unittest.TestCase):
             platform.parse_image("nginx@sha256:abc")
 
     def test_validate_app_name_rejects_reserved_and_invalid_names(self):
-        for app_name in ("kube-system", "Uppercase", "ends-"):
+        for app_name in ("kube-system", "registry-system", "Uppercase", "ends-"):
             with self.assertRaises(SystemExit):
                 platform.validate_app_name(app_name)
 
@@ -61,7 +61,12 @@ class PlatformTest(unittest.TestCase):
                 "tag": "1.2.3",
             })
             self.assertEqual(calls[0][:5], ["helm", "lint", str(chart), "-f", str(defaults)])
-            self.assertIn("../platform/defaults.json", (apps / "my-api.yaml").read_text())
+            application = (apps / "my-api.yaml").read_text()
+            self.assertIn("../platform/defaults.json", application)
+            self.assertIn(
+                'simple-k3s-harness.dev/workload: "true"',
+                application,
+            )
 
     def test_patch_cannot_change_metadata_identity(self):
         with tempfile.TemporaryDirectory() as tmp_dir:

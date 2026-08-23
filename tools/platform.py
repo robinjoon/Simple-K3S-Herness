@@ -15,9 +15,10 @@ DEFAULTS_FILE = BASE_DIR / "platform" / "defaults.json"
 SCHEMA_FILE = CHART_DIR / "values.schema.json"
 
 DNS_1123_LABEL = re.compile(r"[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
+WORKLOAD_NAMESPACE_LABEL = "simple-k3s-harness.dev/workload"
 RESERVED_NAMESPACES = {
     "argocd", "cnpg-system", "database-system", "default", "kube-node-lease",
-    "kube-public", "kube-system",
+    "kube-public", "kube-system", "registry-system",
 }
 
 
@@ -137,6 +138,9 @@ spec:
     server: https://kubernetes.default.svc
     namespace: {app_name}
   syncPolicy:
+    managedNamespaceMetadata:
+      labels:
+        {WORKLOAD_NAMESPACE_LABEL}: "true"
     automated:
       prune: true
       selfHeal: true
