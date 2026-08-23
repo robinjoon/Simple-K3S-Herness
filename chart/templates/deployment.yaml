@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: {{ .Values.metadata.name }}
 spec:
-  replicas: {{ .Values.workload.replicas | default 1 }}
+  replicas: {{ if hasKey .Values.workload "replicas" }}{{ .Values.workload.replicas }}{{ else }}1{{ end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ .Values.metadata.name }}
@@ -16,6 +16,12 @@ spec:
       labels:
         app.kubernetes.io/name: {{ .Values.metadata.name }}
     spec:
+      {{- with .Values.workload.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range . }}
+        - name: {{ .name }}
+      {{- end }}
+      {{- end }}
       containers:
       {{- range .Values.workload.containers }}
         - name: {{ .name }}

@@ -45,10 +45,7 @@
         "kind": {
           "type": "string",
           "enum": [
-            "deployment",
-            "statefulset",
-            "daemonset",
-            "cronjob"
+            "deployment"
           ]
         },
         "replicas": {
@@ -216,6 +213,26 @@
             }
           }
         },
+        "imagePullSecrets": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 253,
+                "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
+              }
+            }
+          }
+        },
         "volumes": {
           "type": "array",
           "items": {
@@ -372,9 +389,45 @@
               "mode": {
                 "type": "string",
                 "enum": [
-                  "cert-manager",
-                  "existing-secret"
+                  "cert-manager"
                 ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ingress": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "className": {
+              "type": "string"
+            }
+          }
+        },
+        "certManager": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "issuerRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "kind"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                }
               }
             }
           }

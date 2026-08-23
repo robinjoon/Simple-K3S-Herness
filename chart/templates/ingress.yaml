@@ -1,4 +1,7 @@
+{{- $platform := index .Values "platform" | default dict }}
+{{- $ingressDefaults := index $platform "ingress" | default dict }}
 {{- range .Values.ingresses }}
+{{- $ingress := . }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -6,6 +9,9 @@ metadata:
   name: {{ $.Values.metadata.name }}-{{ .name }}
   namespace: {{ $.Values.metadata.namespace }}
 spec:
+  {{- with (index $ingressDefaults "className") }}
+  ingressClassName: {{ . }}
+  {{- end }}
   {{- if and .tls (eq .tls.mode "cert-manager") }}
   tls:
     - hosts:
@@ -24,7 +30,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ $.Values.metadata.name }}-{{ $.service | default .servicePort }}
+                name: {{ $.Values.metadata.name }}-{{ $ingress.service }}
                 port:
                   name: {{ .servicePort }}
         {{- end }}

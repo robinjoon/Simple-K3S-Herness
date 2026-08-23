@@ -6,7 +6,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "5" # Operator 생성 이후(CRD가 존재해야 함)에 실행되도록 wave 설정
 spec:
-  project: homelab-workloads
+  project: default
   source:
     repoURL: https://github.com/robinjoon/Simple-K3S-Herness.git
     targetRevision: main

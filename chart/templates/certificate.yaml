@@ -1,3 +1,6 @@
+{{- $platform := index .Values "platform" | default dict }}
+{{- $certManager := index $platform "certManager" | default dict }}
+{{- $issuerRef := index $certManager "issuerRef" | default dict }}
 {{- range .Values.ingresses }}
 {{- if and .tls (eq .tls.mode "cert-manager") }}
 ---
@@ -13,8 +16,7 @@ spec:
     - {{ .host }}
   {{- end }}
   issuerRef:
-    # Here we'd ideally read from platform defaults, but hardcoding for MVP
-    name: letsencrypt-prod
-    kind: ClusterIssuer
+    name: {{ index $issuerRef "name" }}
+    kind: {{ index $issuerRef "kind" }}
 {{- end }}
 {{- end }}

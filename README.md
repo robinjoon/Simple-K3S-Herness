@@ -1,78 +1,77 @@
 # Simple-K3S-Herness (AI-Driven GitOps System)
 
-이 프로젝트는 K3s 홈랩 환경에서 **AI 에이전트(또는 개발자)가 K8s의 복잡성(YAML, CRD 등)에 휘둘리지 않고 안전하게 워크로드를 관리**할 수 있도록 고안된 **통제된 GitOps 파이프라인**입니다.
+K3s 홈랩에서 AI 에이전트가 제한된 JSON 계약과 CLI만으로 애플리케이션을 배포하도록 하는 소형 GitOps 하네스입니다. 에이전트는 Kubernetes YAML이나 Argo CD Application을 직접 작성하지 않고, `tools/platform.py`를 통해 `workloads/<app>/values.json`을 관리합니다.
 
-## 🌟 핵심 철학 (Core Philosophy)
-1. **No Raw YAML**: 개별 앱 배포 시 날것의 Kubernetes YAML 매니페스트를 작성하지 않습니다.
-2. **JSON Contract (SSOT)**: 오직 추상화된 JSON 모델(`values.json`)만 조작하며, 모든 복잡성은 시스템이 제공하는 단일 Base Helm Chart가 처리합니다.
-3. **App-of-Apps 아키텍처**: ArgoCD를 기반으로 인프라(DB, Reflector)와 개별 앱들을 완벽히 선언적으로 관리합니다.
-4. **동적 DB 자동 프로비저닝**: CloudNativePG(CNPG)를 활용하여, 앱 배포 시 이름만 지정하면 무중단으로 해당 앱 전용 DB 인스턴스가 프로비저닝됩니다.
+## 설계 범위
 
----
+- 공식 워크로드 종류는 `Deployment` 하나입니다.
+- 앱마다 네임스페이스를 하나씩 사용합니다. 현재 계약은 앱 생성 시 앱 이름과 네임스페이스를 동일하게 만듭니다.
+- 공통 Helm Chart가 Deployment, Service, ConfigMap, Ingress, cert-manager Certificate, 선택적 CNPG Database를 렌더링합니다. Private registry는 기존 Secret을 `imagePullSecrets`로 참조할 수 있습니다.
+- PostgreSQL은 `database-system`의 CloudNativePG Cluster 하나와 공유 `defaultuser` 계정을 사용합니다. 앱별로 분리되는 것은 논리적 database 이름뿐이며, 앱별 DB 인스턴스·계정·Secret·HA를 만들지 않습니다.
+- Argo CD App-of-Apps가 Git 변경을 동기화하고 prune/self-heal을 수행합니다.
 
-## 📂 저장소 구조
+## 저장소 구조
+
 ```text
-.
-├── argocd/               # ArgoCD App-of-Apps 설정 (Root, Project, 인프라 앱)
-├── chart/                # 유일한 Base Helm Chart (스키마 검증 및 템플릿 포함)
-├── infrastructure/       # 공통 인프라 매니페스트 (CNPG Cluster 뼈대 등)
-├── platform/             # 플랫폼 전역 기본 설정 (Traefik, ClusterIssuer 등)
-├── skills/               # AI 에이전트를 위한 작업 지침 (SKILL.md)
-├── tools/                # ★ 유일한 워크로드 관리 인터페이스 (platform.py)
-└── workloads/            # 생성된 개별 앱들의 JSON Contract 파일들
+argocd/               # Root/Application 및 AppProject
+chart/                # 유일한 공통 Helm Chart와 JSON Schema
+infrastructure/       # CNPG, Reflector 등 공통 인프라
+platform/             # 모든 앱에 먼저 적용되는 플랫폼 공통 Helm 기본값
+skills/               # AI 에이전트 작업 지침
+tools/platform.py     # 유일한 워크로드 관리 CLI
+workloads/            # CLI가 생성한 values.json
 ```
 
----
+## 초기 연동
 
-## 🚀 초기 구축 가이드 (Bootstrapping)
+Argo CD와 CNPG/Reflector를 클러스터에 설치한 뒤 Root Application을 등록합니다.
 
-이 저장소를 K3s 클러스터에 처음 연동할 때 **반드시 수행해야 하는 1회성 초기화 작업**입니다.
-
-### 1. ArgoCD Root Application 등록
-클러스터에 ArgoCD가 설치되어 있다면, 이 저장소를 바라보도록 최상위 앱을 등록합니다.
 ```bash
 kubectl apply -f argocd/root.yaml
 ```
-*(이후 ArgoCD가 CNPG 오퍼레이터, Reflector, Shared DB 인프라 등을 자동으로 띄우기 시작합니다.)*
 
-### 2. 🚨 (중요) DB Secret 복제 트리거 설정 (1회 수동)
-보안을 위해 DB 비밀번호를 Git에 하드코딩하지 않았으므로, CNPG가 클러스터 내부에서 자동으로 생성한 마스터 계정 Secret(`shared-db-app`)을 Reflector가 인식할 수 있도록 **수동으로 어노테이션을 부여**해야 합니다.
-
-모든 인프라 파드가 정상적으로 뜨고 `shared-db` 클러스터가 활성화된 후, 터미널에서 **딱 한 번** 아래 명령어를 실행하세요.
+CNPG가 `database-system` 네임스페이스에 생성한 `shared-db-app` Secret은 Reflector가 앱 네임스페이스로 복제할 수 있도록 한 번 표시해야 합니다.
 
 ```bash
-# CNPG가 생성한 Secret에 Reflector 전파 허용 어노테이션 부여
 kubectl annotate secret shared-db-app -n database-system \
   reflector.v1.k8s.emberstack.com/reflection-allowed="true" \
   reflector.v1.k8s.emberstack.com/reflection-auto-enabled="true"
 ```
-> **Tip:** 이 작업을 수행하면, 이후 배포되는 모든 앱 네임스페이스로 DB 비밀번호 Secret이 자동 복제되어 앱들이 정상적으로 DB에 연결할 수 있게 됩니다.
 
----
+이 Secret은 공유 PostgreSQL 계정의 접속 정보입니다. 앱별 Secret을 발급하는 기능은 범위에 포함하지 않습니다.
 
-## 🛠️ 앱 배포 및 관리 방법 (Usage)
+## CLI 사용법
 
-이 저장소에 새로운 워크로드를 추가하거나 수정할 때는 **절대로 YAML 파일을 직접 만들지 말고** 제공된 CLI 도구를 사용합니다. (AI 에이전트도 동일한 규칙을 따릅니다.)
+AI 에이전트는 아래 flat 명령만 사용합니다. `app create` 같은 중첩 명령이나 `delete` 명령은 제공하지 않습니다.
 
-### 1. 새 워크로드 생성
 ```bash
-python3 tools/platform.py create my-api \
-  --image ghcr.io/my-org/my-api:v1.0.0 \
-  --db-name my_api_db
-```
-* `--db-name` 지정 시, 해당 앱을 위한 전용 DB(CNPG Database CR)가 자동으로 생성됩니다.
-
-### 2. 환경변수 및 설정 변경 (JSON Patch)
-앱의 설정을 바꿀 때는 JSON 병합 패치(Merge Patch) 방식을 사용합니다.
-```bash
-# /tmp/patch.json 에 변경할 내용 작성 후
+python3 tools/platform.py doctor
+python3 tools/platform.py schema
+python3 tools/platform.py list
+python3 tools/platform.py create my-api --image ghcr.io/my-org/my-api:v1.0.0 --db-name my_api_db
+python3 tools/platform.py get my-api
 python3 tools/platform.py patch my-api --file /tmp/patch.json
-```
-
-### 3. 유효성 검증
-```bash
 python3 tools/platform.py validate my-api
+python3 tools/platform.py validate --all
+python3 tools/platform.py render my-api
 ```
-* 스키마(`values.schema.json`) 어긋남, 포트 충돌, 오타 등을 `helm lint`를 통해 1차적으로 완벽히 잡아냅니다.
 
-변경이 완료되면 Git에 커밋(Commit) 및 푸시(Push)하십시오. ArgoCD가 자동으로 변경 사항을 클러스터에 반영합니다.
+`--db-name`을 지정하면 공유 `shared-db` Cluster 안에 해당 논리적 database를 선언합니다. 환경변수, ConfigMap, Secret 참조, 볼륨 마운트, Service, Ingress, cert-manager TLS는 JSON 계약이 허용하는 범위에서 설정할 수 있습니다. 평문 Secret 값은 Git에 저장하지 않습니다.
+
+Private registry를 사용할 때는 `kubernetes.io/dockerconfigjson` 타입 Secret을 앱 네임스페이스에 미리 만든 뒤 이름만 참조합니다.
+
+```json
+{
+  "workload": {
+    "imagePullSecrets": [
+      {"name": "registry-credentials"}
+    ]
+  }
+}
+```
+
+CLI와 Chart는 registry Secret을 생성하거나 인증정보를 values에 저장하지 않습니다.
+
+`platform/defaults.json`은 CLI와 Argo CD가 앱 values보다 먼저 적용하며, 앱 계약으로 덮어쓸 수 없습니다.
+
+변경 후 검증하고 Git에 커밋·푸시하면 Argo CD가 클러스터에 반영합니다. CLI의 검증은 계약과 Helm 렌더링을 확인하는 단계이며, 실제 클러스터 상태나 모든 Kubernetes 운영 조건을 보장하지는 않습니다.

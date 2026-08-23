@@ -1,176 +1,71 @@
-# 🏗️ AI 에이전트용 K3s + ArgoCD 워크로드 관리 시스템 설계서
+# K3s + Argo CD 워크로드 관리 시스템 설계서
 
-## 1. 개요 및 설계 철학
-이 시스템은 AI 에이전트가 K3s + ArgoCD 환경에 워크로드를 배포할 때 발생하는 환각(Hallucination) 현상과 규격 이탈을 원천 차단하기 위해 고안되었습니다.
+## 1. 목적과 범위
 
-**"AI가 Kubernetes를 이해하게 만들지 말고, 통제된 단일 인터페이스(Contract)만 조작하게 만든다"**는 철학을 바탕으로 합니다.
+이 저장소는 AI 에이전트가 Kubernetes 매니페스트를 직접 생성하지 않고, 제한된 JSON Contract와 CLI를 통해 K3s 홈랩 앱을 배포하게 하는 GitOps 하네스다.
 
-### 4대 핵심 원칙
-1. **No Raw YAML**: 에이전트는 어떠한 경우에도 개별 K8s 매니페스트(Deployment, Ingress 등)를 직접 작성할 수 없습니다.
-2. **단일 Base Chart**: 모든 워크로드는 시스템이 제공하는 단일 Helm Chart만을 통해 렌더링됩니다.
-3. **JSON Contract**: 에이전트는 YAML 대신 다루기 안전한 JSON 형식의 추상화된 워크로드 모델만 조작합니다.
-4. **1 Workload = 1 Namespace**: 워크로드 간의 격리성과 ArgoCD의 깔끔한 리소스 정리를 위해 1:1 매핑을 강제합니다.
+현재 공식 지원 범위는 단순한 `Deployment` 기반 앱이다. 고가용성, 앱별 데이터베이스 인스턴스, 앱별 PostgreSQL 계정/Secret은 목표가 아니다.
 
----
+### 핵심 원칙
 
-## 2. 전체 아키텍처 및 디렉터리 구조
+1. 에이전트는 개별 Kubernetes YAML을 작성하지 않는다.
+2. 모든 앱은 하나의 공통 Helm Chart로 렌더링한다.
+3. 에이전트가 조작하는 것은 `workloads/<name>/values.json`뿐이다.
+4. 앱마다 네임스페이스를 사용한다.
+5. PostgreSQL은 공유 Cluster와 공유 `defaultuser`를 사용하고, 논리적 database 이름만 앱별로 나눈다.
 
-### 아키텍처 파이프라인
+## 2. 처리 흐름
+
 ```text
-[AI 에이전트] 
-  │ (JSON 도메인 모델 생성/수정)
+AI 에이전트
+  │ tools/platform.py (doctor/schema/list/create/get/patch/validate/render)
   ▼
-[CLI 도구 (platform.py)] ──▶ (JSON Schema 검증 & helm lint)
-  │ 
-  ├─▶ workloads/<app>/values.json (워크로드 설정)
-  └─▶ argocd/managed/apps/<app>.yaml (ArgoCD Child App)
-  │
-  ▼ (Git Commit & Push)
-[ArgoCD App-of-Apps]
-  │
-  ▼ (단일 Base Chart 렌더링)
-[K3s Cluster (Deployment, Service, Ingress, Certificate...)]
+workloads/<app>/values.json + argocd/managed/apps/<app>.yaml
+  │ Git push
+  ▼
+Argo CD Root Application → Child Application → 공통 Helm Chart → K3s
 ```
 
-### Git 저장소 구조
+Chart가 계약에 따라 다음 리소스를 렌더링한다.
+
+- Deployment
+- 선택적 Service, ConfigMap, Ingress
+- 선택적 cert-manager Certificate
+- `database.name`이 있을 때 CNPG `Database`
+
+워크로드 계약에는 컨테이너 이미지/포트, replicas, 기존 registry Secret을 가리키는 `imagePullSecrets`, 환경변수와 ConfigMap·Secret 참조, 볼륨·마운트, 서비스·Ingress·TLS, 논리적 database 이름이 포함된다. StatefulSet, DaemonSet, CronJob, 임의 raw manifest, existing-secret TLS 모드는 공식 계약이 아니다.
+
+`imagePullSecrets`는 Secret 이름만 받는다. registry 사용자명·비밀번호·토큰은 values에 저장하지 않으며, Secret은 운영자가 앱 네임스페이스에 미리 준비한다.
+
+## 3. 데이터베이스 모델
+
+`infrastructure/shared-db`의 CloudNativePG Cluster 하나가 `database-system`에 배포된다. 앱이 `database.name`을 선언하면 공통 Cluster 안에 CNPG `Database` 리소스를 만들고 owner는 공유 `defaultuser`를 사용한다. 접속 Secret도 공유 `shared-db-app`을 Reflector로 앱 네임스페이스에 복제한다.
+
+따라서 데이터베이스 이름은 앱별로 구분되지만 PostgreSQL 서버, 계정, Secret은 공유된다. 이 단순화는 홈랩 목표에 맞춘 의도적인 선택이며, 계정별 권한 격리나 앱별 인스턴스 분리를 제공하지 않는다.
+
+## 4. CLI 계약
+
+에이전트가 사용할 명령은 flat 형태로 고정한다.
+
 ```text
-homelab/
-├── chart/                      # 단일 Base Helm Chart (에이전트 수정 불가)
-│   ├── Chart.yaml
-│   ├── values.yaml             # 기본값
-│   ├── values.schema.json      # ★ 엄격한 JSON Schema 검증 룰
-│   └── templates/              # Deployment, Service, Ingress, Certificate 등
-│
-├── platform/
-│   └── defaults.json           # 플랫폼 공통 설정 (Traefik, ClusterIssuer 등)
-│
-├── workloads/                  # 개별 워크로드 설정 (JSON)
-│   └── my-api/
-│       └── values.json
-│
-├── argocd/                     # ArgoCD App-of-Apps 매니페스트
-│   ├── root.yaml
-│   └── managed/
-│       ├── project.yaml        # 보안 통제용 AppProject
-│       └── apps/
-│           └── my-api.yaml     # Child Application
-│
-├── tools/
-│   └── platform.py             # ★ 유일한 에이전트 인터페이스 (CLI)
-│
-└── skills/
-    └── homelab-k3s-workloads/
-        └── SKILL.md            # 에이전트 행동 지침
+doctor
+schema
+list
+create NAME --image IMAGE [--db-name NAME] [--file JSON]
+get NAME
+patch NAME --file JSON
+validate NAME | validate --all
+render NAME
 ```
 
----
+에이전트는 CLI를 우회해 values 파일, Argo Application, Helm Chart를 직접 수정하지 않는다. `delete`는 제공하지 않으므로 삭제가 필요하면 운영자가 별도 절차를 수행한다.
 
-## 3. 핵심 설계 요소
+검증은 JSON Schema와 Helm lint/렌더링에 초점을 둔다. 이것은 클러스터 API 검증, Secret 존재 확인, 네트워크 연결 확인 또는 무중단 배포 보장이 아니다.
 
-### 3.1 YAML 대신 JSON 사용 (`values.json`)
-- 에이전트가 `platform.py`를 통해 데이터를 다룰 때 외부 의존성(PyYAML 등) 없이 Python 표준 라이브러리만으로 안전하게 파싱 및 병합(Merge)하기 위해 JSON을 사용합니다.
-- Helm은 JSON을 완벽하게 지원합니다.
+## 5. Argo CD 정책
 
-### 3.2 `values.schema.json`을 통한 원천 차단 (Guardrail)
-- Python 코드 내에 수많은 `if` 문을 두는 대신, Helm의 기본 기능인 JSON Schema를 활용합니다.
-- `additionalProperties: false`를 기본으로 설정하여, 에이전트가 존재하지 않는 필드(`extraObjects`, `rawManifests` 등)를 주입하려고 하면 `helm lint` 단계에서 즉시 실패(Fail-fast) 처리됩니다.
+`homelab-workloads` AppProject는 소스 저장소를 이 저장소 URL(`https://github.com/robinjoon/Simple-K3S-Herness.git`)로 제한한다. 대상 서버는 기본 Kubernetes API 서버이며 앱마다 namespace가 달라 destinations의 `namespace: "*"`는 유지한다. 이는 모든 namespace에 임의로 배포한다는 운영 목표가 아니라, Child Application의 앱별 namespace를 하나의 Project에서 수용하기 위한 설정이다.
 
-### 3.3 도메인 모델 추상화 (Homelab Workload Contract)
-- K8s API 구조를 그대로 노출하지 않습니다.
-- 에이전트는 `deployment`, `statefulset`, `daemonset`, `cronjob` 4가지 타입과 직관적인 포트, 인그레스 설정 등 **추상화된 스펙**만 다룹니다.
-- Ingress의 TLS 인증서(cert-manager) 발급, StatefulSet의 Headless Service 자동 생성 등 복잡한 작업은 Base Chart 내부에서 자동으로 처리됩니다.
+워크로드 Project는 Namespace 생성과 공통 Chart가 직접 만드는 Deployment, Service, ConfigMap, Ingress, cert-manager Certificate, CNPG Database를 허용한다. Argo CD 리소스 트리에서 컨트롤러가 만든 하위 리소스를 확인할 수 있도록 ReplicaSet, Pod, Secret, CertificateRequest, Order, Challenge도 허용한다. 이 하위 리소스들은 JSON Contract가 직접 생성하지 않는다.
 
----
-
-## 4. CLI 도구 (`platform.py`) 명세 및 보완책
-
-에이전트는 이 CLI만 사용하여 작업을 수행해야 합니다. K8s SDK나 API 서버 직접 접근은 차단됩니다.
-
-### 기본 명령어
-```bash
-python3 tools/platform.py doctor             # 플랫폼 상태 및 CLI 정상 작동 확인
-python3 tools/platform.py schema             # 허용되는 JSON Schema 구조 확인
-python3 tools/platform.py app list           # 현재 워크로드 목록 조회
-python3 tools/platform.py app get my-api     # 특정 워크로드 설정 조회 (JSON)
-python3 tools/platform.py app validate --all # 전체 워크로드 렌더링 및 유효성 검증
-```
-
-### 💡 [보완 적용] 생성 및 패치 (JSON Escaping 오류 방지)
-에이전트가 긴 JSON 문자열을 Bash에 직접 입력하다가 따옴표 Escaping 에러를 내는 것을 방지하기 위해, **파일 기반 패치 옵션**을 강력히 권장합니다.
-
-```bash
-# 1. 앱 생성
-python3 tools/platform.py app create my-api \
-  --kind deployment \
-  --image ghcr.io/example/my-api:1.4.2
-
-# 2. 앱 설정 수정 (JSON Merge Patch 방식)
-# AI는 /tmp/patch.json 에 수정할 JSON 내용을 먼저 저장한 뒤 명령을 실행합니다.
-cat << 'INNER_EOF' > /tmp/patch.json
-{
-  "workload": {
-    "replicas": 2
-  },
-  "ingresses": [
-    {
-      "name": "public",
-      "service": "http",
-      "rules": [{"host": "api.example.com", "paths": [{"path": "/"}]}],
-      "tls": {"mode": "cert-manager"}
-    }
-  ]
-}
-INNER_EOF
-
-python3 tools/platform.py app patch my-api --file /tmp/patch.json
-```
-
----
-
-## 5. 보안 및 권한 제어 (Safety Nets)
-
-### 5.1 ArgoCD `AppProject`를 통한 2차 방어선
-- `argocd/managed/project.yaml`에 워크로드 배포용 Project를 엄격하게 정의합니다.
-- **Cluster-scoped 리소스 배포 전면 금지** (예: `ClusterRole`, `ClusterIssuer` 등).
-- 허용된 Namespace-scoped 리소스(`Deployment`, `Service`, `Ingress`, `ConfigMap` 등)만 화이트리스트 처리하여, 에이전트가 버그로 이상한 매니페스트를 만들더라도 ArgoCD 단에서 배포를 차단합니다.
-
-### 5.2 💡 [보완 적용] Secret 관리 원칙 고정
-- **Git 내에 평문 Secret 보관 및 생성을 절대 금지**합니다.
-- `values.json`에서는 **기존 Secret 참조(`secretKeyRef`)**만 허용합니다.
-- 새로운 Secret 생성이 필요할 경우, 이는 AI 시스템 밖(클러스터 관리자)에서 사전에 생성되어야 하며, AI는 해당 Secret의 존재 유무를 확인한 뒤 참조만 구성하도록 정책을 강제합니다.
-
----
-
-## 6. AI 에이전트 스킬 지침 (`SKILL.md`)
-
-AI 에이전트가 이 생태계에 접근할 때 강제로 주입해야 할 시스템 프롬프트(SKILL) 규약입니다.
-
-```markdown
-# Skill: homelab-k3s-workloads
-
-## 1. Description
-Creates, inspects, modifies, validates and removes workloads in this homelab K3s GitOps repository using `tools/platform.py`. 
-Use for tasks involving workload deployment, containers, services, ingress, TLS, configuration, RBAC or resource settings.
-
-## 2. 작업 순서 (Workflow Protocol)
-1. 작업 시작 전 `platform.py doctor` 실행
-2. 기존 워크로드 수정 시 `app get`으로 현재 JSON 스펙 확인
-3. 필요한 기능이 있을 경우 `platform.py schema`로 지원 여부 확인
-4. 변경은 **반드시** `app create` 및 `app patch --file <json-file>` 사용
-5. 변경 후 `app validate`로 이상 유무 검증
-6. `app render`로 최종 생성될 매니페스트 확인 후 Git 커밋
-
-## 3. 엄격한 금지 사항 (CRITICAL PROHIBITIONS) 🚨
-- **NEVER** create another Helm chart.
-- **NEVER** create Kubernetes YAML files for an individual workload.
-- **NEVER** directly modify `workloads/*/values.json` without CLI.
-- **NEVER** directly modify `argocd/managed/apps/*.yaml`.
-- **NEVER** use `kubectl apply` or `helm install/upgrade`.
-- **NEVER** use the Argo CD CLI to create or modify Applications.
-- **NEVER** inject arbitrary pod specs, extraObjects, or raw manifests.
-
-## 4. 미지원 기능 처리 (Handling Unsupported Capabilities)
-사용자가 GPU 할당 등 `platform.py`나 `schema`에서 지원하지 않는 리소스를 요청할 경우:
-- 임의로 YAML을 우회 생성하여 적용하려 하지 마십시오 (Do not work around).
-- 즉시 작업을 중지(STOP)하고 "현재 Homelab Workload Contract에서 해당 기능을 지원하지 않으므로 Base Chart 확장이 필요합니다"라고 사용자에게 보고하십시오.
-```
+공유 CNPG Cluster 같은 인프라 리소스는 `default` Project의 인프라 Application과 Root Application이 관리하며, 워크로드 Project에는 Cluster 생성 권한을 주지 않는다. `platform/defaults.json`은 모든 앱 values보다 먼저 병합되고 워크로드 계약에서는 덮어쓸 수 없다.
