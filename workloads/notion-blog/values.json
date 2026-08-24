@@ -1,0 +1,126 @@
+{
+  "contractVersion": 1,
+  "metadata": {
+    "name": "notion-blog",
+    "namespace": "notion-blog"
+  },
+  "workload": {
+    "kind": "deployment",
+    "replicas": 1,
+    "containers": [
+      {
+        "name": "app",
+        "image": {
+          "repository": "registry.homelab.robinjoon.xyz/apps/notion-blog",
+          "tag": "sha-e4ec443a9f3501f98096f92f1008766429126c04-run-32729993544-1"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "containerPort": 8080
+          }
+        ],
+        "env": [
+          {
+            "name": "DB_HOST",
+            "secretKeyRef": {
+              "name": "shared-db-app",
+              "key": "host"
+            }
+          },
+          {
+            "name": "DB_PORT",
+            "secretKeyRef": {
+              "name": "shared-db-app",
+              "key": "port"
+            }
+          },
+          {
+            "name": "SPRING_DATASOURCE_URL",
+            "value": "jdbc:postgresql://$(DB_HOST):$(DB_PORT)/notion_blog"
+          },
+          {
+            "name": "SPRING_DATASOURCE_USERNAME",
+            "secretKeyRef": {
+              "name": "shared-db-app",
+              "key": "username"
+            }
+          },
+          {
+            "name": "SPRING_DATASOURCE_PASSWORD",
+            "secretKeyRef": {
+              "name": "shared-db-app",
+              "key": "password"
+            }
+          },
+          {
+            "name": "NOTION_TOKEN",
+            "secretKeyRef": {
+              "name": "notion-blog-runtime",
+              "key": "NOTION_TOKEN"
+            }
+          },
+          {
+            "name": "NOTION_SETTINGS_DATA_SOURCE_ID",
+            "secretKeyRef": {
+              "name": "notion-blog-runtime",
+              "key": "NOTION_SETTINGS_DATA_SOURCE_ID"
+            }
+          },
+          {
+            "name": "NOTION_API_VERSION",
+            "value": "2025-09-03"
+          },
+          {
+            "name": "BLOG_BASE_URL",
+            "value": "https://blog.homelab.robinjoon.xyz"
+          },
+          {
+            "name": "SPRING_PROFILES_ACTIVE",
+            "value": "prod"
+          }
+        ]
+      }
+    ],
+    "imagePullSecrets": [
+      {
+        "name": "registry-credentials"
+      }
+    ]
+  },
+  "database": {
+    "name": "notion_blog"
+  },
+  "services": [
+    {
+      "name": "web",
+      "ports": [
+        {
+          "name": "http",
+          "port": 80,
+          "targetPort": "http"
+        }
+      ]
+    }
+  ],
+  "ingresses": [
+    {
+      "name": "public",
+      "service": "web",
+      "rules": [
+        {
+          "host": "blog.homelab.robinjoon.xyz",
+          "paths": [
+            {
+              "path": "/",
+              "servicePort": "http"
+            }
+          ]
+        }
+      ],
+      "tls": {
+        "mode": "cert-manager"
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: notion-blog
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: homelab-workloads
+  source:
+    repoURL: https://github.com/robinjoon/Simple-K3S-Herness.git
+    targetRevision: main
+    path: chart
+    helm:
+      releaseName: notion-blog
+      valueFiles:
+        - ../platform/defaults.json
+        - ../workloads/notion-blog/values.json
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: notion-blog
+  syncPolicy:
+    managedNamespaceMetadata:
+      labels:
+        simple-k3s-harness.dev/workload: "true"
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
