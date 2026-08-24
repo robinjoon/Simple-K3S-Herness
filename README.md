@@ -7,7 +7,7 @@ K3s 홈랩에서 AI 에이전트가 제한된 JSON 계약과 CLI만으로 애플
 - 공식 워크로드 종류는 `Deployment` 하나입니다.
 - 앱마다 네임스페이스를 하나씩 사용합니다. 현재 계약은 앱 생성 시 앱 이름과 네임스페이스를 동일하게 만듭니다.
 - 공통 Helm Chart가 Deployment, Service, ConfigMap, Ingress, cert-manager Certificate, 선택적 CNPG Database를 렌더링합니다. 비공개 레지스트리는 기존 Secret을 `imagePullSecrets`로 참조할 수 있습니다.
-- PostgreSQL은 `database-system`의 CloudNativePG Cluster 하나와 공유 `defaultuser` 계정을 사용합니다. 앱별로 분리되는 것은 논리적 database 이름뿐이며, 앱별 DB 인스턴스, 계정, Secret, HA를 만들지 않습니다.
+- PostgreSQL은 `database-system`의 CloudNativePG Cluster 하나와 공유 `defaultuser` 계정을 사용합니다. `database`를 선언한 앱의 모든 컨테이너에는 하네스가 올바른 FQDN의 `DB_HOST`를 자동으로 주입합니다. 앱별로 분리되는 것은 논리적 database 이름뿐이며, 앱별 DB 인스턴스, 계정, Secret, HA를 만들지 않습니다.
 - 자체 컨테이너 레지스트리는 일반 워크로드 계약 밖의 공통 인프라입니다. zot을 `registry-system`에 `replicaCount: 1`인 StatefulSet과 RWO PVC로 배포합니다.
 - Argo CD App-of-Apps가 Git 변경을 동기화하고 prune/self-heal을 수행합니다.
 
@@ -112,7 +112,7 @@ kubectl -n database-system annotate secret shared-db-app --overwrite \
   reflector.v1.k8s.emberstack.com/reflection-auto-namespaces-selector="simple-k3s-harness.dev/workload=true"
 ```
 
-`shared-db-app`은 공유 PostgreSQL 계정의 접속 정보입니다. 앱별 Secret을 발급하는 기능은 범위에 포함하지 않습니다.
+`shared-db-app`은 공유 PostgreSQL 계정의 접속 정보입니다. 위 명령은 Reflector의 복제 범위를 지정하는 metadata만 추가하며, CNPG가 관리하는 Secret의 `data`는 수정하지 않습니다. `host`와 `pgpass`는 원본 네임스페이스의 짧은 Service 이름을 사용하고, `dbname`과 모든 URI 키(`uri`, `jdbc-uri`, `fqdn-uri`, `fqdn-jdbc-uri`)는 공유 Cluster의 bootstrap database를 가리키므로 앱별 논리적 database 계약에 맞지 않습니다. 따라서 워크로드는 복제본의 `port`, `username`, `password`만 사용할 수 있고, 전체 Secret을 `envFrom`이나 볼륨으로 가져올 수 없습니다. DB host는 Chart가 `platform.database.host`의 `shared-db-rw.database-system.svc.cluster.local`을 `DB_HOST`로 제공합니다. 앱별 Secret을 발급하는 기능은 범위에 포함하지 않습니다.
 
 ## 자체 컨테이너 레지스트리 운영
 
@@ -196,7 +196,7 @@ python3 tools/platform.py validate --all
 python3 tools/platform.py render my-api
 ```
 
-`--db-name`을 지정하면 공유 `shared-db` Cluster 안에 해당 논리적 database를 선언합니다. 환경변수, ConfigMap, Secret 참조, 볼륨 마운트, Service, Ingress, cert-manager TLS는 JSON 계약이 허용하는 범위에서 설정할 수 있습니다. 평문 Secret 값은 Git에 저장하지 않습니다.
+`--db-name`을 지정하면 공유 `shared-db` Cluster 안에 해당 논리적 database를 선언하고 모든 컨테이너에 `DB_HOST=shared-db-rw.database-system.svc.cluster.local`을 기존 환경변수보다 먼저 주입합니다. `DB_HOST`는 플랫폼 예약 이름이므로 database 워크로드가 직접 정의하면 검증에 실패합니다. 복제된 `shared-db-app`의 `host`나 연결 URI 대신 이 환경변수를 사용합니다. 그 밖의 환경변수, ConfigMap, Secret 참조, 볼륨 마운트, Service, Ingress, cert-manager TLS는 JSON 계약이 허용하는 범위에서 설정할 수 있습니다. 평문 Secret 값은 Git에 저장하지 않습니다.
 
 자체 레지스트리 이미지를 사용할 때는 Reflector가 앱 네임스페이스에 복제한 `registry-credentials`를 이름으로만 참조합니다.
 
@@ -212,6 +212,6 @@ python3 tools/platform.py render my-api
 
 CLI와 Chart는 레지스트리 Secret을 생성하거나 인증 정보를 values에 저장하지 않습니다. Reflector가 원본 `registry-credentials` Secret의 `type`과 `data`를 허용된 워크로드 네임스페이스에 복제합니다.
 
-`platform/defaults.json`은 CLI와 Argo CD가 앱 values보다 먼저 적용하며, 앱 계약으로 덮어쓸 수 없습니다.
+`platform/defaults.json`은 CLI와 Argo CD가 앱 values보다 먼저 적용하며, DB FQDN을 포함한 플랫폼 값은 앱 계약으로 덮어쓸 수 없습니다.
 
 변경 후 검증하고 Git에 커밋하고 푸시하면 Argo CD가 클러스터에 반영합니다. CLI의 검증은 계약과 Helm 렌더링을 확인하는 단계이며, 실제 클러스터 상태나 모든 Kubernetes 운영 조건을 보장하지는 않습니다.

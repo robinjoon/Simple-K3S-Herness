@@ -22,10 +22,6 @@
         ],
         "env": [
           {
-            "name": "DB_HOST",
-            "value": "shared-db-rw.database-system.svc.cluster.local"
-          },
-          {
             "name": "DB_PORT",
             "secretKeyRef": {
               "name": "shared-db-app",

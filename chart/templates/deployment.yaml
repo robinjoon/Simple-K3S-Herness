@@ -33,9 +33,19 @@ spec:
               containerPort: {{ .containerPort }}
           {{- end }}
           {{- end }}
-          {{- if .env }}
+          {{- if or $.Values.database .env }}
           env:
+          {{- if $.Values.database }}
+            - name: DB_HOST
+              value: {{ required "platform.database.host is required when database is declared" $.Values.platform.database.host | quote }}
+          {{- end }}
           {{- range .env }}
+            {{- if and $.Values.database (eq .name "DB_HOST") }}
+              {{- fail "DB_HOST is managed by the platform when database is declared" }}
+            {{- end }}
+            {{- if and $.Values.database .secretKeyRef (eq .secretKeyRef.name "shared-db-app") (not (has .secretKeyRef.key (list "port" "username" "password"))) }}
+              {{- fail "shared-db-app may only supply port, username, and password to database workloads" }}
+            {{- end }}
             - name: {{ .name }}
               {{- if .value }}
               value: {{ .value | quote }}
@@ -57,6 +67,9 @@ spec:
           {{- if .envFrom }}
           envFrom:
           {{- range .envFrom }}
+            {{- if and $.Values.database .secretRef (eq .secretRef.name "shared-db-app") }}
+              {{- fail "shared-db-app may only supply port, username, and password to database workloads" }}
+            {{- end }}
             {{- if .configMapRef }}
             - configMapRef:
                 name: {{ $.Values.metadata.name }}-{{ .configMapRef.name }}
@@ -84,6 +97,9 @@ spec:
       {{- if .Values.workload.volumes }}
       volumes:
       {{- range .Values.workload.volumes }}
+        {{- if and $.Values.database .secret (eq .secret.secretName "shared-db-app") }}
+          {{- fail "shared-db-app may only supply port, username, and password to database workloads" }}
+        {{- end }}
         - name: {{ .name }}
           {{- if .configMap }}
           configMap:

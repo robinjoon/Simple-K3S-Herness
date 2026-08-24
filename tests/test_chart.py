@@ -9,6 +9,21 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 CHART_DIR = REPOSITORY_ROOT / "chart"
 PLATFORM_DEFAULTS = REPOSITORY_ROOT / "platform" / "defaults.json"
+NOTION_BLOG_VALUES = REPOSITORY_ROOT / "workloads" / "notion-blog" / "values.json"
+
+
+def render_chart(values, release="sample"):
+    with tempfile.TemporaryDirectory() as directory:
+        values_path = Path(directory) / "values.json"
+        values_path.write_text(json.dumps(values))
+        return subprocess.run(
+            [
+                "helm", "template", release, str(CHART_DIR),
+                "-f", str(PLATFORM_DEFAULTS), "-f", str(values_path),
+            ],
+            text=True,
+            capture_output=True,
+        )
 
 
 class ChartRenderTest(unittest.TestCase):
@@ -25,6 +40,9 @@ class ChartRenderTest(unittest.TestCase):
                     "name": "app",
                     "image": {"repository": "nginx", "tag": "1.27"},
                     "ports": [{"name": "http", "containerPort": 8080}],
+                }, {
+                    "name": "sidecar",
+                    "image": {"repository": "busybox", "tag": "1.36"},
                 }],
             },
             "database": {"name": "sample_db"},
@@ -44,17 +62,7 @@ class ChartRenderTest(unittest.TestCase):
             }],
         }
 
-        with tempfile.TemporaryDirectory() as directory:
-            values_path = Path(directory) / "values.json"
-            values_path.write_text(json.dumps(values))
-            result = subprocess.run(
-                [
-                    "helm", "template", "sample", str(CHART_DIR),
-                    "-f", str(PLATFORM_DEFAULTS), "-f", str(values_path),
-                ],
-                text=True,
-                capture_output=True,
-            )
+        result = render_chart(values)
 
         self.assertEqual(result.returncode, 0, result.stderr)
         manifests = result.stdout
@@ -77,6 +85,137 @@ class ChartRenderTest(unittest.TestCase):
         self.assertIn("namespace: database-system", manifests)
         self.assertIn("name: sample_db", manifests)
         self.assertIn("owner: defaultuser", manifests)
+        self.assertIn(
+            '- name: DB_HOST\n              value: "shared-db-rw.database-system.svc.cluster.local"',
+            manifests,
+        )
+        self.assertEqual(manifests.count("- name: DB_HOST"), 2)
+
+    @unittest.skipUnless(shutil.which("helm"), "helm CLI is required")
+    def test_does_not_inject_database_host_without_database(self):
+        values = {
+            "contractVersion": 1,
+            "metadata": {"name": "sample", "namespace": "sample"},
+            "workload": {
+                "kind": "deployment",
+                "containers": [{
+                    "name": "app",
+                    "image": {"repository": "nginx", "tag": "1.27"},
+                }],
+            },
+        }
+
+        result = render_chart(values)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("- name: DB_HOST", result.stdout)
+
+    @unittest.skipUnless(shutil.which("helm"), "helm CLI is required")
+    def test_rejects_database_host_environment_override(self):
+        values = {
+            "contractVersion": 1,
+            "metadata": {"name": "sample", "namespace": "sample"},
+            "workload": {
+                "kind": "deployment",
+                "containers": [{
+                    "name": "app",
+                    "image": {"repository": "nginx", "tag": "1.27"},
+                    "env": [{"name": "DB_HOST", "value": "shared-db-rw"}],
+                }],
+            },
+            "database": {"name": "sample_db"},
+        }
+
+        result = render_chart(values)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("DB_HOST is managed by the platform", result.stderr)
+
+    @unittest.skipUnless(shutil.which("helm"), "helm CLI is required")
+    def test_rejects_platform_database_host_override(self):
+        values = {
+            "contractVersion": 1,
+            "metadata": {"name": "sample", "namespace": "sample"},
+            "workload": {
+                "kind": "deployment",
+                "containers": [{
+                    "name": "app",
+                    "image": {"repository": "nginx", "tag": "1.27"},
+                }],
+            },
+            "database": {"name": "sample_db"},
+            "platform": {"database": {"host": "shared-db-rw"}},
+        }
+
+        result = render_chart(values)
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("/platform/database/host", result.stderr)
+
+    @unittest.skipUnless(shutil.which("helm"), "helm CLI is required")
+    def test_rejects_unsafe_database_secret_consumption(self):
+        unsafe_fields = (
+            ({
+                "env": [{
+                    "name": "PGHOST",
+                    "secretKeyRef": {"name": "shared-db-app", "key": "host"},
+                }],
+            }, {}),
+            ({"envFrom": [{"secretRef": {"name": "shared-db-app"}}]}, {}),
+            ({"volumeMounts": [{"name": "database", "mountPath": "/database"}]}, {
+                "volumes": [{
+                    "name": "database",
+                    "secret": {"secretName": "shared-db-app"},
+                }],
+            }),
+        )
+
+        for container_fields, workload_fields in unsafe_fields:
+            with self.subTest(container_fields=container_fields, workload_fields=workload_fields):
+                values = {
+                    "contractVersion": 1,
+                    "metadata": {"name": "sample", "namespace": "sample"},
+                    "workload": {
+                        "kind": "deployment",
+                        "containers": [{
+                            "name": "app",
+                            "image": {"repository": "nginx", "tag": "1.27"},
+                            **container_fields,
+                        }],
+                        **workload_fields,
+                    },
+                    "database": {"name": "sample_db"},
+                }
+
+                result = render_chart(values)
+
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("shared-db-app may only supply port, username, and password", result.stderr)
+
+    @unittest.skipUnless(shutil.which("helm"), "helm CLI is required")
+    def test_notion_blog_uses_the_managed_database_host(self):
+        values = json.loads(NOTION_BLOG_VALUES.read_text())
+        env_names = [
+            env["name"]
+            for container in values["workload"]["containers"]
+            for env in container.get("env", [])
+        ]
+
+        self.assertNotIn("DB_HOST", env_names)
+
+        result = render_chart(values, release="notion-blog")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.count("- name: DB_HOST"), 1)
+        self.assertIn(
+            '- name: DB_HOST\n              value: "shared-db-rw.database-system.svc.cluster.local"',
+            result.stdout,
+        )
+        self.assertLess(result.stdout.index("- name: DB_HOST"), result.stdout.index("- name: DB_PORT"))
+        self.assertLess(
+            result.stdout.index("- name: DB_PORT"),
+            result.stdout.index("- name: SPRING_DATASOURCE_URL"),
+        )
 
     @unittest.skipUnless(shutil.which("helm"), "helm CLI is required")
     def test_rejects_unsupported_workload_kind(self):

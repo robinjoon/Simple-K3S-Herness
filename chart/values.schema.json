@@ -112,7 +112,8 @@
                   ],
                   "properties": {
                     "name": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "DB_HOST is reserved and injected by the platform when database is declared."
                     },
                     "value": {
                       "type": "string"
@@ -276,6 +277,7 @@
     },
     "database": {
       "type": "object",
+      "description": "Declares a database and injects the platform-managed DB_HOST FQDN into every workload container.",
       "additionalProperties": false,
       "required": [
         "name"
@@ -401,6 +403,19 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "database": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "host"
+          ],
+          "properties": {
+            "host": {
+              "type": "string",
+              "const": "shared-db-rw.database-system.svc.cluster.local"
+            }
+          }
+        },
         "ingress": {
           "type": "object",
           "additionalProperties": false,

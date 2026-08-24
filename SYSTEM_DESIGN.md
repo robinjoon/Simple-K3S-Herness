@@ -32,14 +32,17 @@ Chart가 계약에 따라 다음 리소스를 렌더링한다.
 - 선택적 Service, ConfigMap, Ingress
 - 선택적 cert-manager Certificate
 - `database.name`이 있을 때 CNPG `Database`
+- `database.name`이 있을 때 모든 컨테이너에 플랫폼 관리 `DB_HOST` FQDN
 
-워크로드 계약에는 컨테이너 이미지/포트, replicas, 기존 registry Secret을 가리키는 `imagePullSecrets`, 환경변수와 ConfigMap·Secret 참조, 볼륨·마운트, 서비스·Ingress·TLS, 논리적 database 이름이 포함된다. StatefulSet, DaemonSet, CronJob, 임의 raw manifest, existing-secret TLS 모드는 공식 계약이 아니다.
+워크로드 계약에는 컨테이너 이미지/포트, replicas, 기존 registry Secret을 가리키는 `imagePullSecrets`, 환경변수와 ConfigMap·Secret 참조, 볼륨·마운트, 서비스·Ingress·TLS, 논리적 database 이름이 포함된다. Database 워크로드의 `DB_HOST`는 플랫폼 예약 이름이며 워크로드 values에서 직접 정의할 수 없다. StatefulSet, DaemonSet, CronJob, 임의 raw manifest, existing-secret TLS 모드는 공식 계약이 아니다.
 
 `imagePullSecrets`는 Secret 이름만 받는다. 레지스트리 사용자 이름, 비밀번호, 토큰은 values에 저장하지 않으며, 워크로드는 Reflector가 미리 복제한 `registry-credentials` Secret의 이름만 참조한다.
 
 ## 3. 데이터베이스 모델
 
 `infrastructure/shared-db`의 CloudNativePG Cluster 하나가 `database-system`에 배포된다. 앱이 `database.name`을 선언하면 공통 Cluster 안에 CNPG `Database` 리소스를 만들고 owner는 공유 `defaultuser`를 사용한다. 접속 Secret도 공유 `shared-db-app`을 Reflector로 앱 네임스페이스에 복제한다.
+
+CNPG가 생성한 Secret의 `host`와 `pgpass`는 같은 네임스페이스의 짧은 Service 이름을 사용하므로 다른 네임스페이스의 복제본에서는 유효하지 않다. `dbname`과 모든 URI 키는 공유 Cluster의 bootstrap database를 가리켜 앱별 논리적 database와 일치하지 않는다. 하네스는 원본 Secret의 `data`를 수정하지 않고, 워크로드가 `database`를 선언하면 `platform/defaults.json`이 관리하는 `shared-db-rw.database-system.svc.cluster.local`을 모든 컨테이너의 첫 번째 환경변수 `DB_HOST`로 주입한다. 이후 환경변수의 `$(DB_HOST)` 확장이 이 값을 사용할 수 있도록 순서를 고정하고, values의 수동 `DB_HOST` 선언은 렌더 단계에서 거부한다. 복제 Secret은 명시적인 `port`, `username`, `password` 참조에만 사용할 수 있으며, 다른 키 참조와 전체 `envFrom`·볼륨 마운트는 렌더 단계에서 거부한다.
 
 CLI가 생성하는 Child Application은 Argo CD `managedNamespaceMetadata`로 앱 네임스페이스에 `simple-k3s-harness.dev/workload=true` 라벨을 붙인다. Reflector는 이 라벨 셀렉터와 일치하는 네임스페이스에만 `shared-db-app`을 자동 복제한다. 따라서 Secret 공유 범위는 모든 네임스페이스가 아니라 하네스가 관리하는 워크로드 네임스페이스로 제한된다.
 

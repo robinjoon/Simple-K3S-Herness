@@ -43,7 +43,7 @@ class PlatformTest(unittest.TestCase):
                 name="my-api",
                 kind="deployment",
                 image="registry.local:5000/team/api:1.2.3",
-                db_name=None,
+                db_name="my_api",
                 file=None,
             )
             with patch.multiple(
@@ -60,6 +60,7 @@ class PlatformTest(unittest.TestCase):
                 "repository": "registry.local:5000/team/api",
                 "tag": "1.2.3",
             })
+            self.assertEqual(values["database"], {"name": "my_api"})
             self.assertEqual(calls[0][:5], ["helm", "lint", str(chart), "-f", str(defaults)])
             application = (apps / "my-api.yaml").read_text()
             self.assertIn("../platform/defaults.json", application)

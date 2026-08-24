@@ -1,5 +1,8 @@
 {
   "platform": {
+    "database": {
+      "host": "shared-db-rw.database-system.svc.cluster.local"
+    },
     "ingress": {
       "className": "traefik"
     },

@@ -24,13 +24,14 @@ description: >
 - 공식 워크로드는 Deployment입니다.
 - 기존 registry Secret 이름을 `workload.imagePullSecrets`로 참조할 수 있습니다. 인증정보나 Secret 자체는 생성하지 않습니다.
 - ConfigMap, 환경변수, Secret/ConfigMap 참조, 볼륨과 마운트, Service, Ingress, cert-manager Certificate를 지원합니다.
-- DB는 공유 `shared-db` Cluster와 공유 `defaultuser`를 사용하며 `--db-name`은 논리적 database 이름만 분리합니다.
+- DB는 공유 `shared-db` Cluster와 공유 `defaultuser`를 사용하며 `--db-name`은 논리적 database 이름을 분리하고 모든 컨테이너에 올바른 FQDN의 `DB_HOST`를 자동 주입합니다.
 
 ## 금지 사항
 
 - 개별 워크로드용 Kubernetes YAML, 별도 Helm Chart, raw manifest를 만들지 않습니다.
 - `workloads/*/values.json`이나 `argocd/managed/apps/*.yaml`을 직접 수정하지 않습니다.
 - 워크로드 JSON에 `platform`을 넣어 `platform/defaults.json`을 덮어쓰지 않습니다.
+- Database 워크로드에 `DB_HOST`를 직접 정의하거나 복제된 `shared-db-app`의 `port`, `username`, `password` 이외의 키를 참조하지 않습니다. 전체 Secret을 `envFrom`이나 볼륨으로 가져오지 않습니다. `DB_HOST`는 하네스가 관리합니다.
 - `kubectl apply`, `helm install/upgrade`, Argo CD CLI로 앱을 우회 배포하지 않습니다.
 - StatefulSet, DaemonSet, CronJob, 앱별 DB 인스턴스/계정/Secret, 지원하지 않는 필드를 임의로 구현하지 않습니다.
 
