@@ -30,6 +30,7 @@ description: >
 
 - 개별 워크로드용 Kubernetes YAML, 별도 Helm Chart, raw manifest를 만들지 않습니다.
 - `workloads/*/values.json`이나 `argocd/managed/apps/*.yaml`을 직접 수정하지 않습니다.
+- CI 전용 `tools/release.py`를 에이전트의 워크로드 구성 변경에 사용하지 않습니다.
 - 워크로드 JSON에 `platform`을 넣어 `platform/defaults.json`을 덮어쓰지 않습니다.
 - Database 워크로드에 `DB_HOST`를 직접 정의하거나 복제된 `shared-db-app`의 `port`, `username`, `password` 이외의 키를 참조하지 않습니다. 전체 Secret을 `envFrom`이나 볼륨으로 가져오지 않습니다. `DB_HOST`는 하네스가 관리합니다.
 - `kubectl apply`, `helm install/upgrade`, Argo CD CLI로 앱을 우회 배포하지 않습니다.

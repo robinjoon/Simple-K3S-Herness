@@ -1,6 +1,6 @@
 # Simple-K3S-Herness (AI-Driven GitOps System)
 
-K3s 홈랩에서 AI 에이전트가 제한된 JSON 계약과 CLI만으로 애플리케이션을 배포하도록 하는 소형 GitOps 하네스입니다. 에이전트는 Kubernetes YAML이나 Argo CD Application을 직접 작성하지 않고, `tools/platform.py`를 통해 `workloads/<app>/values.json`을 관리합니다.
+K3s 홈랩에서 AI 에이전트가 제한된 JSON 계약과 CLI만으로 애플리케이션을 배포하도록 하는 소형 GitOps 하네스입니다. 에이전트는 Kubernetes YAML이나 Argo CD Application을 직접 작성하지 않고, `tools/platform.py`를 통해 `workloads/<app>/values.json`을 관리합니다. 앱 CI의 새 버전 배포는 별도의 `tools/release.py`가 기존 컨테이너의 이미지 태그만 변경합니다.
 
 ## 설계 범위
 
@@ -19,7 +19,8 @@ chart/                # 유일한 공통 Helm Chart와 JSON Schema
 infrastructure/       # CNPG, 레지스트리 NetworkPolicy 등 공통 인프라
 platform/             # 모든 앱에 먼저 적용되는 플랫폼 공통 Helm 기본값
 skills/               # AI 에이전트 작업 지침
-tools/platform.py     # 유일한 워크로드 관리 CLI
+tools/platform.py     # AI 에이전트용 워크로드 구성 관리 CLI
+tools/release.py      # CI 전용 이미지 태그 변경 CLI
 workloads/            # CLI가 생성한 values.json
 ```
 
@@ -133,6 +134,40 @@ docker logout "$REGISTRY_HOST"
 
 CI 로그에 `REGISTRY_PASSWORD`를 출력하지 않습니다.
 
+### 새 버전 배포 자동화
+
+앱 CI는 이미지를 레지스트리에 성공적으로 push한 뒤 이 저장소의 `Release workload image` GitHub Actions 워크플로를 호출합니다. 앱 CI는 GitOps 파일을 직접 수정하지 않고 앱 이름, 기존 컨테이너 이름, 새 이미지 태그만 전달합니다. 워크플로는 `tools/release.py`로 태그 하나만 바꾸고, Helm 검증과 렌더링을 통과한 변경만 `main`에 커밋하고 푸시합니다. Argo CD는 그 커밋을 감지해 클러스터에 동기화합니다.
+
+앱 저장소에는 이 하네스 저장소로 범위를 제한하고 `Actions: write`만 허용한 GitHub App 토큰 또는 fine-grained personal access token을 `HARNESS_ACTIONS_TOKEN` Secret으로 등록합니다. 앱 CI의 이미지 push 다음 단계는 다음과 같이 구성할 수 있습니다.
+
+```yaml
+- name: Request a workload release
+  env:
+    GH_TOKEN: ${{ secrets.HARNESS_ACTIONS_TOKEN }}
+    IMAGE_TAG: ${{ steps.image.outputs.tag }}
+  run: |
+    gh workflow run release-workload-image.yml \
+      --repo robinjoon/Simple-K3S-Herness \
+      --ref main \
+      -f app=notion-blog \
+      -f container=app \
+      -f tag="$IMAGE_TAG"
+```
+
+하네스 워크플로의 `GITHUB_TOKEN`에는 이 저장소의 `contents: write`만 부여됩니다. `main` 브랜치 보호 규칙이 GitHub Actions의 직접 push를 막는다면 해당 봇의 push를 허용하거나 별도의 PR 기반 흐름으로 바꿔야 합니다. 릴리스 요청은 직렬로 처리되며, 다른 커밋과 경합해 최초 push가 실패하면 최신 `main` 위로 한 번 rebase한 뒤 다시 push합니다.
+
+CI 전용 CLI는 Git 작업이나 이미지 push, Argo CD 조작을 하지 않습니다. 로컬에서 동작만 확인할 때는 다음 명령을 사용할 수 있습니다.
+
+```bash
+python3 tools/release.py notion-blog \
+  --container app \
+  --tag sha-0123456789abcdef
+python3 tools/platform.py validate notion-blog
+python3 tools/platform.py render notion-blog >/dev/null
+```
+
+`release.py`는 이미지 repository를 바꾸지 않으며, OCI 태그 문법에 맞지 않는 값과 재사용 가능한 `latest`를 거부합니다. 지정한 컨테이너가 없거나 같은 이름의 컨테이너가 둘 이상이거나 변경 결과가 Helm 검증을 통과하지 못하면 `values.json`을 쓰지 않습니다. 동일한 태그 요청은 성공으로 처리하지만 새 커밋을 만들지 않습니다. Git 커밋 성공은 배포 요청이 Git에 기록되었다는 의미이며 실제 Argo CD 동기화와 Deployment Ready 상태까지 보장하지는 않습니다.
+
 ### Secret 회전
 
 `admin` 비밀번호를 바꿀 때는 `local.env`의 `REGISTRY_PASSWORD`를 수정하고 2단계의 두 Secret 생성 명령을 다시 실행한 뒤 zot을 명시적으로 재시작합니다. 실행 중인 zot이 Kubernetes projected Secret의 파일 교체를 즉시 감지한다고 가정하지 않습니다.
@@ -180,7 +215,7 @@ kubectl -n my-api get secret registry-credentials \
 
 마지막 명령의 결과는 `kubernetes.io/dockerconfigjson`이어야 합니다. Secret의 `.dockerconfigjson` 데이터를 터미널이나 로그에 출력해 검증하지 않습니다. 실제 운영 전에는 `admin` 계정으로 테스트 태그를 push하고, 복제된 Secret을 사용하는 앱 네임스페이스에서 그 이미지를 pull하는 과정까지 확인합니다.
 
-## CLI 사용법
+## AI 에이전트 CLI 사용법
 
 AI 에이전트는 아래 flat 명령만 사용합니다. `app create` 같은 중첩 명령이나 `delete` 명령은 제공하지 않습니다.
 
@@ -214,4 +249,4 @@ CLI와 Chart는 레지스트리 Secret을 생성하거나 인증 정보를 value
 
 `platform/defaults.json`은 CLI와 Argo CD가 앱 values보다 먼저 적용하며, DB FQDN을 포함한 플랫폼 값은 앱 계약으로 덮어쓸 수 없습니다.
 
-변경 후 검증하고 Git에 커밋하고 푸시하면 Argo CD가 클러스터에 반영합니다. CLI의 검증은 계약과 Helm 렌더링을 확인하는 단계이며, 실제 클러스터 상태나 모든 Kubernetes 운영 조건을 보장하지는 않습니다.
+AI의 워크로드 구성 변경은 `platform.py`, CI의 기존 이미지 태그 변경은 `release.py`만 사용하며 두 인터페이스를 우회해 `values.json`을 직접 수정하지 않습니다. 변경 후 검증하고 Git에 커밋하고 푸시하면 Argo CD가 클러스터에 반영합니다. CLI의 검증은 계약과 Helm 렌더링을 확인하는 단계이며, 실제 클러스터 상태나 모든 Kubernetes 운영 조건을 보장하지는 않습니다.

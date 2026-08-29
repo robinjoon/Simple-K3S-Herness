@@ -13,6 +13,7 @@
 3. 에이전트가 조작하는 것은 `workloads/<name>/values.json`뿐이다.
 4. 앱마다 네임스페이스를 사용한다.
 5. PostgreSQL은 공유 Cluster와 공유 `defaultuser`를 사용하고, 논리적 database 이름만 앱별로 나눈다.
+6. 앱 CI의 릴리스 경로는 에이전트용 CLI와 분리하고 기존 컨테이너의 이미지 태그만 변경한다.
 
 ## 2. 처리 흐름
 
@@ -24,6 +25,14 @@ workloads/<app>/values.json + argocd/managed/apps/<app>.yaml
   │ Git push
   ▼
 Argo CD Root Application → Child Application → 공통 Helm Chart → K3s
+
+앱 CI (이미지 push 완료)
+  │ workflow_dispatch (app/container/tag)
+  ▼
+GitHub Actions → tools/release.py (기존 이미지 태그만 변경)
+  │ validate/render → Git commit/push
+  ▼
+Argo CD Child Application → 공통 Helm Chart → K3s
 ```
 
 Chart가 계약에 따라 다음 리소스를 렌더링한다.
@@ -60,7 +69,9 @@ zot에 내장된 htpasswd 인증과 저장소 ACL을 사용하고 익명 접근�
 
 `registry.homelab.robinjoon.xyz`가 Traefik 진입점을 가리키도록 하는 DNS 레코드는 외부 접근의 선행 조건이지만 이 저장소에서 생성하지 않는다. Tailscale을 사용한다면 tailnet, 인증 정보, 라우팅, 접근 정책은 Ingress 앞단의 외부 네트워크 계층으로 둔다. 이는 zot 인증과 ACL을 대체하지 않으며, Tailscale을 사용하지 않을 때도 TLS와 zot 접근 제어는 유지한다.
 
-## 5. CLI 계약
+## 5. 변경 인터페이스 계약
+
+### AI 에이전트 CLI
 
 에이전트가 사용할 명령은 flat 형태로 고정한다.
 
@@ -78,6 +89,14 @@ render NAME
 에이전트는 CLI를 우회해 values 파일, Argo Application, Helm Chart를 직접 수정하지 않는다. `delete`는 제공하지 않으므로 삭제가 필요하면 운영자가 별도 절차를 수행한다.
 
 검증은 JSON Schema와 Helm lint/렌더링에 초점을 둔다. 이것은 클러스터 API 검증, Secret 존재 확인, 네트워크 연결 확인 또는 무중단 배포 보장이 아니다.
+
+### CI 릴리스 CLI
+
+`tools/release.py NAME --container NAME --tag TAG`는 앱 CI의 이미지 push 이후 실행되는 별도 인터페이스다. 기존 워크로드와 컨테이너가 정확히 하나 존재할 때 이미지 repository와 나머지 워크로드 설정은 그대로 두고 태그만 바꾼다. OCI 태그 문법에 맞지 않는 값과 `latest`를 거부하며, 변경된 전체 values가 Helm lint를 통과하기 전에는 파일을 쓰지 않는다.
+
+`.github/workflows/release-workload-image.yml`은 수동 또는 외부 앱 CI의 `workflow_dispatch` 입력을 받아 Python과 Helm을 준비하고, 릴리스 CLI 실행, validate/render, 변경 파일 범위 확인, 커밋과 push를 수행한다. Git 인증과 경합 처리는 Actions 워크플로의 책임이며 `release.py`는 Git, 레지스트리, Argo CD, Kubernetes를 직접 조작하지 않는다. 모든 릴리스 요청은 하나의 동시성 그룹에서 직렬화한다.
+
+AI 에이전트는 구성 변경에 `release.py`를 사용하지 않고, 앱 CI는 `platform.py patch`로 이미지 태그를 갱신하지 않는다. 이 두 인터페이스 밖에서 `workloads/*/values.json`을 직접 수정하지 않는다.
 
 ## 6. Argo CD 정책
 

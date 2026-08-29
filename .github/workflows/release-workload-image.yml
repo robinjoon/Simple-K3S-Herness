@@ -1,0 +1,105 @@
+name: Release workload image
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: Existing workload name
+        required: true
+        type: string
+      container:
+        description: Existing container name
+        required: true
+        default: app
+        type: string
+      tag:
+        description: New immutable image tag
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-workload-image
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      APP_NAME: ${{ inputs.app }}
+      CONTAINER_NAME: ${{ inputs.container }}
+      IMAGE_TAG: ${{ inputs.tag }}
+    steps:
+      - name: Check out the harness
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.13"
+
+      - name: Set up Helm
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: v4.0.5
+
+      - name: Fast-forward to the latest main
+        run: git pull --ff-only origin main
+
+      - name: Update the image tag
+        run: |
+          python3 tools/release.py "$APP_NAME" \
+            --container "$CONTAINER_NAME" \
+            --tag "$IMAGE_TAG"
+
+      - name: Validate and render the workload
+        run: |
+          python3 tools/platform.py validate "$APP_NAME"
+          python3 tools/platform.py render "$APP_NAME" >/dev/null
+
+      - name: Verify the change scope
+        id: changes
+        shell: bash
+        run: |
+          workload_file="workloads/${APP_NAME}/values.json"
+          changed_files="$(git diff --name-only)"
+
+          if [[ -z "$changed_files" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "$changed_files" != "$workload_file" ]]; then
+            echo "Unexpected changed files:" >&2
+            printf '%s\n' "$changed_files" >&2
+            exit 1
+          fi
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "workload_file=$workload_file" >> "$GITHUB_OUTPUT"
+
+      - name: Commit the release
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          WORKLOAD_FILE: ${{ steps.changes.outputs.workload_file }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "$WORKLOAD_FILE"
+          git commit -m "chore(${APP_NAME}): deploy image ${IMAGE_TAG}"
+
+      - name: Push the release
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          if git push origin HEAD:main; then
+            exit 0
+          fi
+
+          git pull --rebase origin main
+          git push origin HEAD:main
