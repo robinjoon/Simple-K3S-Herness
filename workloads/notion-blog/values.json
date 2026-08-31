@@ -12,7 +12,7 @@
         "name": "app",
         "image": {
           "repository": "registry.homelab.robinjoon.xyz/apps/notion-blog",
-          "tag": "sha-eabd0d6e5be790db20cd85e91fef89e8f361759f-run-33322994041-2"
+          "tag": "sha-a93334fcfdb49b11876288534b8724467d50ede6-run-33360543529-1"
         },
         "ports": [
           {
