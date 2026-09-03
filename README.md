@@ -4,12 +4,22 @@ K3s 홈랩에서 AI 에이전트가 제한된 JSON 계약과 CLI만으로 애플
 
 ## 설계 범위
 
+- 제1원칙은 **앱 간 격리 최소화**입니다. 단일 운영자의 앱들을 함께 신뢰하고 공통 인프라·계정·Secret을 공유합니다. 앱별 네임스페이스는 리소스 정리와 배포 관리에 사용하며, 엄격한 보안 격리를 목표로 하지 않습니다. 외부 접근 인증과 Secret의 Git·로그 노출 방지는 유지합니다.
 - 공식 워크로드 종류는 `Deployment` 하나입니다.
 - 앱마다 네임스페이스를 하나씩 사용합니다. 현재 계약은 앱 생성 시 앱 이름과 네임스페이스를 동일하게 만듭니다.
 - 공통 Helm Chart가 Deployment, Service, ConfigMap, Ingress, cert-manager Certificate, 선택적 CNPG Database를 렌더링합니다. 비공개 레지스트리는 기존 Secret을 `imagePullSecrets`로 참조할 수 있습니다.
 - PostgreSQL은 `database-system`의 CloudNativePG Cluster 하나와 공유 `defaultuser` 계정을 사용합니다. `database`를 선언한 앱의 모든 컨테이너에는 하네스가 올바른 FQDN의 `DB_HOST`를 자동으로 주입합니다. 앱별로 분리되는 것은 논리적 database 이름뿐이며, 앱별 DB 인스턴스, 계정, Secret, HA를 만들지 않습니다.
 - 자체 컨테이너 레지스트리는 일반 워크로드 계약 밖의 공통 인프라입니다. zot을 `registry-system`에 `replicaCount: 1`인 StatefulSet과 RWO PVC로 배포합니다.
 - Argo CD App-of-Apps가 Git 변경을 동기화하고 prune/self-heal을 수행합니다.
+
+개인용 공통 GitHub Action은 [load-ci-secrets](.github/actions/load-ci-secrets/action.yml)에 구현되어 있으며 실행 의존성을 포함한 번들을 함께 관리합니다. Secret Manage System(시크릿 관리 앱)은 아직 미구현이고 Action의 원격 게시와 실제 CI 전환도 하지 않았습니다. 설계는 CI 자격증명을 기존 공유 PostgreSQL의 전용 논리 DB에 한 번 보관하고, 허용된 레포가 앱 이름으로 조회하는 구조입니다. 앱별 Secret 권한 분리나 앱 실행용 Kubernetes Secret 등록은 하지 않으며, 셀프 호스팅 러너는 추가하지 않습니다.
+
+| 설계 문서 | 다루는 범위 |
+| --- | --- |
+| [전체 설계](SYSTEM_DESIGN.md) | C4 시스템 관계·컨테이너 수준의 책임과 흐름, Mermaid 다이어그램 |
+| [워크로드 플랫폼 설계](docs/WORKLOAD_PLATFORM.md) | 기존 하네스의 워크로드 계약, 공유 DB·레지스트리 모델, 에이전트·CI 인터페이스 계약, Argo CD 정책 |
+| [Secret Manage System](docs/SECRET_MANAGE_SYSTEM.md) | API 규약과 공유 PostgreSQL 저장·운영 설계 |
+| [공통 GitHub Action](docs/GITHUB_ACTION.md) | Action의 구조, 호출 권한, 다른 레포에서의 사용법 |
 
 ## 저장소 구조
 
