@@ -1,0 +1,134 @@
+{
+  "contractVersion": 1,
+  "metadata": {
+    "name": "sms",
+    "namespace": "sms"
+  },
+  "workload": {
+    "kind": "deployment",
+    "replicas": 0,
+    "containers": [
+      {
+        "name": "app",
+        "image": {
+          "repository": "registry.homelab.robinjoon.xyz/apps/sms",
+          "tag": "sha-07206aa72aca960485322c56162e18342aa015d5-run-34372074831-2"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "containerPort": 8080
+          }
+        ],
+        "env": [
+          {
+            "name": "DB_PORT",
+            "secretKeyRef": {
+              "name": "shared-db-app",
+              "key": "port"
+            }
+          },
+          {
+            "name": "SPRING_DATASOURCE_URL",
+            "value": "jdbc:postgresql://$(DB_HOST):$(DB_PORT)/secret_manage_system"
+          },
+          {
+            "name": "SPRING_DATASOURCE_USERNAME",
+            "secretKeyRef": {
+              "name": "shared-db-app",
+              "key": "username"
+            }
+          },
+          {
+            "name": "SPRING_DATASOURCE_PASSWORD",
+            "secretKeyRef": {
+              "name": "shared-db-app",
+              "key": "password"
+            }
+          },
+          {
+            "name": "SMS_OPERATOR_USERNAME",
+            "secretKeyRef": {
+              "name": "sms-operator",
+              "key": "username"
+            }
+          },
+          {
+            "name": "SMS_OPERATOR_PASSWORD_HASH",
+            "secretKeyRef": {
+              "name": "sms-operator",
+              "key": "password-hash"
+            }
+          },
+          {
+            "name": "SPRING_CONFIG_ADDITIONAL_LOCATION",
+            "value": "file:/config/policy.yml"
+          }
+        ],
+        "volumeMounts": [
+          {
+            "name": "policy",
+            "mountPath": "/config",
+            "readOnly": true
+          }
+        ]
+      }
+    ],
+    "imagePullSecrets": [
+      {
+        "name": "registry-credentials"
+      }
+    ],
+    "volumes": [
+      {
+        "name": "policy",
+        "configMap": {
+          "name": "policy"
+        }
+      }
+    ]
+  },
+  "database": {
+    "name": "secret_manage_system"
+  },
+  "configMaps": [
+    {
+      "name": "policy",
+      "data": {
+        "policy.yml": "sms:\n  ci:\n    repositories:\n      - repository-id: \"1284508552\"\n        repository-owner-id: \"45223837\"\n        repository: robinjoon/Notion-Blog\n        allowed-refs: [refs/heads/master]\n        allowed-events: [push, workflow_dispatch]\n        allowed-workflows:\n          - robinjoon/Notion-Blog/.github/workflows/ci.yml@refs/heads/master\n"
+      }
+    }
+  ],
+  "services": [
+    {
+      "name": "web",
+      "ports": [
+        {
+          "name": "http",
+          "port": 80,
+          "targetPort": "http"
+        }
+      ]
+    }
+  ],
+  "ingresses": [
+    {
+      "name": "public",
+      "service": "web",
+      "rules": [
+        {
+          "host": "secrets.homelab.robinjoon.xyz",
+          "paths": [
+            {
+              "path": "/",
+              "servicePort": "http"
+            }
+          ]
+        }
+      ],
+      "tls": {
+        "mode": "cert-manager"
+      }
+    }
+  ]
+}
