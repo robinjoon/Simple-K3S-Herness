@@ -63,14 +63,6 @@
           {
             "name": "SPRING_CONFIG_ADDITIONAL_LOCATION",
             "value": "file:/config/policy.yml"
-          },
-          {
-            "name": "SERVER_FORWARD_HEADERS_STRATEGY",
-            "value": "native"
-          },
-          {
-            "name": "SMS_REQUIRE_HTTPS",
-            "value": "true"
           }
         ],
         "volumeMounts": [
