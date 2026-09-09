@@ -63,6 +63,10 @@
           {
             "name": "SPRING_CONFIG_ADDITIONAL_LOCATION",
             "value": "file:/config/policy.yml"
+          },
+          {
+            "name": "SERVER_TOMCAT_USE_RELATIVE_REDIRECTS",
+            "value": "true"
           }
         ],
         "volumeMounts": [
