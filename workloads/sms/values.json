@@ -12,7 +12,7 @@
         "name": "app",
         "image": {
           "repository": "registry.homelab.robinjoon.xyz/apps/sms",
-          "tag": "sha-1bb333518740068a34fe34106069c30300f1bb53-run-34374709171-1"
+          "tag": "sha-707bab61f8e73525adc85fc965003874868e9e3c-run-34489037196-1"
         },
         "ports": [
           {
