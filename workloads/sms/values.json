@@ -1,8 +1,8 @@
 {
   "contractVersion": 1,
   "metadata": {
-    "name": "notion-blog",
-    "namespace": "notion-blog"
+    "name": "sms",
+    "namespace": "sms"
   },
   "workload": {
     "kind": "deployment",
@@ -11,8 +11,8 @@
       {
         "name": "app",
         "image": {
-          "repository": "registry.homelab.robinjoon.xyz/apps/notion-blog",
-          "tag": "sha-a93334fcfdb49b11876288534b8724467d50ede6-run-33360543529-1"
+          "repository": "registry.homelab.robinjoon.xyz/apps/sms",
+          "tag": "sha-707bab61f8e73525adc85fc965003874868e9e3c-run-34489037196-1"
         },
         "ports": [
           {
@@ -30,7 +30,7 @@
           },
           {
             "name": "SPRING_DATASOURCE_URL",
-            "value": "jdbc:postgresql://$(DB_HOST):$(DB_PORT)/notion_blog"
+            "value": "jdbc:postgresql://$(DB_HOST):$(DB_PORT)/secret_manage_system"
           },
           {
             "name": "SPRING_DATASOURCE_USERNAME",
@@ -47,38 +47,33 @@
             }
           },
           {
-            "name": "NOTION_TOKEN",
+            "name": "SMS_OPERATOR_USERNAME",
             "secretKeyRef": {
-              "name": "notion-blog-runtime",
-              "key": "NOTION_TOKEN"
+              "name": "sms-operator",
+              "key": "username"
             }
           },
           {
-            "name": "NOTION_SETTINGS_DATA_SOURCE_ID",
+            "name": "SMS_OPERATOR_PASSWORD_HASH",
             "secretKeyRef": {
-              "name": "notion-blog-runtime",
-              "key": "NOTION_SETTINGS_DATA_SOURCE_ID"
+              "name": "sms-operator",
+              "key": "password-hash"
             }
           },
           {
-            "name": "NOTION_API_VERSION",
-            "value": "2026-03-11"
+            "name": "SPRING_CONFIG_ADDITIONAL_LOCATION",
+            "value": "file:/config/policy.yml"
           },
           {
-            "name": "BLOG_SYNCHRONIZATION_INTERVAL_MS",
-            "value": "60000"
-          },
+            "name": "SERVER_TOMCAT_USE_RELATIVE_REDIRECTS",
+            "value": "true"
+          }
+        ],
+        "volumeMounts": [
           {
-            "name": "BLOG_SYNCHRONIZATION_SUCCESS_INTERVAL",
-            "value": "1m"
-          },
-          {
-            "name": "BLOG_BASE_URL",
-            "value": "https://blog.homelab.robinjoon.xyz"
-          },
-          {
-            "name": "SPRING_PROFILES_ACTIVE",
-            "value": "prod"
+            "name": "policy",
+            "mountPath": "/config",
+            "readOnly": true
           }
         ]
       }
@@ -87,11 +82,27 @@
       {
         "name": "registry-credentials"
       }
+    ],
+    "volumes": [
+      {
+        "name": "policy",
+        "configMap": {
+          "name": "policy"
+        }
+      }
     ]
   },
   "database": {
-    "name": "notion_blog"
+    "name": "secret_manage_system"
   },
+  "configMaps": [
+    {
+      "name": "policy",
+      "data": {
+        "policy.yml": "sms:\n  ci:\n    repositories:\n      - repository-id: \"1284508552\"\n        repository-owner-id: \"45223837\"\n        repository: robinjoon/Notion-Blog\n        allowed-refs: [refs/heads/master]\n        allowed-events: [push, workflow_dispatch]\n        allowed-workflows:\n          - robinjoon/Notion-Blog/.github/workflows/ci.yml@refs/heads/master\n"
+      }
+    }
+  ],
   "services": [
     {
       "name": "web",
@@ -110,7 +121,7 @@
       "service": "web",
       "rules": [
         {
-          "host": "blog.homelab.robinjoon.xyz",
+          "host": "secrets.homelab.robinjoon.xyz",
           "paths": [
             {
               "path": "/",
