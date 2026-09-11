@@ -1,0 +1,9 @@
+name: Load homelab CI secrets
+description: Load CI secrets from Secret Manage System
+inputs:
+  app:
+    description: App name to query
+    required: true
+runs:
+  using: node24
+  main: dist/index.js

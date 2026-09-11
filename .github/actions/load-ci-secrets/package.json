@@ -1,0 +1,20 @@
+{
+  "name": "homelab-load-ci-secrets",
+  "version": "1.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "description": "Load homelab CI secrets into subsequent steps of a GitHub Actions job",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "build": "ncc build src/index.js --out dist --target es2022 --minify --license licenses.txt",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@actions/core": "3.0.1"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "0.45.0"
+  }
+}
