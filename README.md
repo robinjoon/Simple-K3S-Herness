@@ -12,7 +12,7 @@ K3s 홈랩에서 AI 에이전트가 제한된 JSON 계약과 CLI만으로 애플
 - 자체 컨테이너 레지스트리는 일반 워크로드 계약 밖의 공통 인프라입니다. zot을 `registry-system`에 `replicaCount: 1`인 StatefulSet과 RWO PVC로 배포합니다.
 - Argo CD App-of-Apps가 Git 변경을 동기화하고 prune/self-heal을 수행합니다.
 
-개인용 공통 GitHub Action은 [load-ci-secrets](.github/actions/load-ci-secrets/action.yml)에 구현되어 있으며 실행 의존성을 포함한 번들을 함께 관리합니다. Secret Manage System(시크릿 관리 앱)은 아직 미구현이고 Action의 원격 게시와 실제 CI 전환도 하지 않았습니다. 설계는 CI 자격증명을 기존 공유 PostgreSQL의 전용 논리 DB에 한 번 보관하고, 허용된 레포가 앱 이름으로 조회하는 구조입니다. 앱별 Secret 권한 분리나 앱 실행용 Kubernetes Secret 등록은 하지 않으며, 셀프 호스팅 러너는 추가하지 않습니다.
+개인용 공통 GitHub Action은 [load-ci-secrets](.github/actions/load-ci-secrets/action.yml)에 구현되어 있으며 실행 의존성을 포함한 번들을 함께 관리합니다. Secret Manage System(시크릿 관리 앱)은 `https://secrets.homelab.robinjoon.xyz`에 배포되어 있고 공통 Action은 `v1.0.0`으로 게시했습니다. 노션 블로그의 publish job은 SMS의 `zot`·`harness` 객체를 조회합니다. 설계는 CI 자격증명을 기존 공유 PostgreSQL의 전용 논리 DB에 한 번 보관하고, 허용된 레포가 앱 이름으로 조회하는 구조입니다. 앱별 Secret 권한 분리나 앱 실행용 Kubernetes Secret 등록은 하지 않으며, 셀프 호스팅 러너는 추가하지 않습니다.
 
 | 설계 문서 | 다루는 범위 |
 | --- | --- |
@@ -129,7 +129,7 @@ kubectl -n database-system annotate secret shared-db-app --overwrite \
 
 ### 이미지 push
 
-CI에는 `REGISTRY_HOST`, `REGISTRY_USERNAME`, `REGISTRY_PASSWORD`를 마스킹된 Secret으로 등록합니다. 로컬에서는 먼저 `source ./local.env`를 실행합니다. 같은 태그를 덮어쓸 수 있지만, 추적성과 롤백을 위해 `latest` 대신 커밋 SHA처럼 매번 새로운 태그를 사용하는 것을 권장합니다.
+SMS를 사용하는 앱 CI는 레지스트리 주소를 GitHub Variable로 설정하고, 공통 Action으로 `zot` 객체의 `REGISTRY_USERNAME`, `REGISTRY_PASSWORD`를 환경변수로 받습니다. 로컬에서는 먼저 `source ./local.env`를 실행합니다. 같은 태그를 덮어쓸 수 있지만, 추적성과 롤백을 위해 `latest` 대신 커밋 SHA처럼 매번 새로운 태그를 사용하는 것을 권장합니다.
 
 ```bash
 IMAGE_TAG="git-$(git rev-parse --short=12 HEAD)"
@@ -142,18 +142,18 @@ docker push "$IMAGE"
 docker logout "$REGISTRY_HOST"
 ```
 
-CI 로그에 `REGISTRY_PASSWORD`를 출력하지 않습니다.
+CI 로그에 `REGISTRY_PASSWORD`를 출력하지 않습니다. SMS 자체의 배포 CI는 서비스 장애 중에도 배포할 수 있도록 기존 GitHub Secrets를 사용합니다.
 
 ### 새 버전 배포 자동화
 
 앱 CI는 이미지를 레지스트리에 성공적으로 push한 뒤 이 저장소의 `Release workload image` GitHub Actions 워크플로를 호출합니다. 앱 CI는 GitOps 파일을 직접 수정하지 않고 앱 이름, 기존 컨테이너 이름, 새 이미지 태그만 전달합니다. 워크플로는 `tools/release.py`로 태그 하나만 바꾸고, Helm 검증과 렌더링을 통과한 변경만 `main`에 커밋하고 푸시합니다. Argo CD는 그 커밋을 감지해 클러스터에 동기화합니다.
 
-앱 저장소에는 이 하네스 저장소로 범위를 제한하고 `Actions: write`만 허용한 GitHub App 토큰 또는 fine-grained personal access token을 `HARNESS_ACTIONS_TOKEN` Secret으로 등록합니다. 앱 CI의 이미지 push 다음 단계는 다음과 같이 구성할 수 있습니다.
+SMS의 `harness` 객체에는 이 하네스 저장소로 범위를 제한하고 `Actions: write`만 허용한 토큰을 `HARNESS_ACTIONS_TOKEN`으로 등록합니다. 앱 CI는 `id-token: write` 권한으로 공통 Action의 `app: harness` 조회를 수행한 뒤 다음과 같이 이미지 배포를 요청합니다. 전체 사용 예시는 [공통 Action 문서](docs/GITHUB_ACTION.md)를 참고합니다.
 
 ```yaml
 - name: Request a workload release
   env:
-    GH_TOKEN: ${{ secrets.HARNESS_ACTIONS_TOKEN }}
+    GH_TOKEN: ${{ env.HARNESS_ACTIONS_TOKEN }}
     IMAGE_TAG: ${{ steps.image.outputs.tag }}
   run: |
     gh workflow run release-workload-image.yml \
@@ -187,7 +187,7 @@ kubectl -n registry-system rollout restart statefulset/zot
 kubectl -n registry-system rollout status statefulset/zot --timeout=5m
 ```
 
-같은 유지보수 창에서 대상 네임스페이스의 `registry-credentials` 복제본이 갱신되었는지 확인합니다. CI Secret과 비밀번호 관리자도 함께 갱신합니다. 복제된 자격 증명을 회수할 때는 원본 Secret을 바로 삭제하지 말고 먼저 `reflection-allowed="false"`로 바꾼 뒤 대상 복제본이 사라졌는지 확인합니다.
+같은 유지보수 창에서 대상 네임스페이스의 `registry-credentials` 복제본이 갱신되었는지 확인합니다. SMS의 `zot` 객체, SMS 자체 CI에 남긴 GitHub Secrets와 비밀번호 관리자도 함께 갱신합니다. 복제된 자격 증명을 회수할 때는 원본 Secret을 바로 삭제하지 말고 먼저 `reflection-allowed="false"`로 바꾼 뒤 대상 복제본이 사라졌는지 확인합니다.
 
 ### 백업과 복구
 

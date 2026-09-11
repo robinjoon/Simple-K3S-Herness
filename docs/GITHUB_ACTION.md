@@ -1,6 +1,6 @@
 # 공통 GitHub Action 설계와 사용법
 
-상태: 공통 Action의 로컬 구현과 실행 번들 생성 완료. 기준일: 2026-09-03. SMS는 아직 구현·배포하지 않았으며 Action 원격 게시, 실제 커밋 SHA 확보, 소비 앱의 CI 전환도 수행하지 않았다.
+상태: 공통 Action `v1.0.0` 게시, SMS 배포와 노션 블로그 CI 전환 적용 완료. 운영 기준일: 2026-09-11.
 
 이 문서는 **C4 Component(L3)를 참고해 호출 job 안의 책임과 외부 인터페이스**를 설명한다. 공통 Action은 앱의 GitHub Actions runner에서 실행하는 JavaScript 구성 요소이며 독립 서버나 상시 컨테이너가 아니다. 클래스·파싱 알고리즘·테스트 코드까지 내려가지 않는다. 시스템 관계는 [전체 설계](../SYSTEM_DESIGN.md), HTTP 계약은 [Secret Manage System 명세](SECRET_MANAGE_SYSTEM.md)를 따른다.
 
@@ -23,7 +23,7 @@ flowchart LR
   sms -->|"앱 이름을 유지한 JSON"| delivery
 ```
 
-입력은 `app` 하나다. 개인용 Action이므로 API 주소 `https://secrets.homelab.robinjoon.xyz`와 audience `urn:homelab:ci-secrets:v1`는 내부 상수로 둔다. 주소는 배포 전 제안이며 아직 사용 가능한 서비스가 아니다. 별도 VPN이 필요한 네트워크라면 연결은 호출 job에서 먼저 준비한다. OIDC가 홈서버까지의 네트워크를 만들어 주지는 않는다.
+입력은 `app` 하나다. 개인용 Action이므로 API 주소 `https://secrets.homelab.robinjoon.xyz`와 audience `urn:homelab:ci-secrets:v1`는 내부 상수로 둔다. 이 주소에서 SMS를 운영한다. 별도 VPN이 필요한 네트워크라면 연결은 호출 job에서 먼저 준비한다. OIDC가 홈서버까지의 네트워크를 만들어 주지는 않는다.
 
 | 책임 | 계약 |
 | --- | --- |
@@ -144,9 +144,9 @@ env:
 
 ## 검토 조건과 검증 범위
 
-로컬 테스트는 더미 OIDC·HTTP 응답과 환경변수를 사용해 입력·응답 검증, 충돌 처리, 마스킹 순서, 제한된 재시도와 안전한 실패를 확인한다. 실행 번들 검증은 개발 소스와 배포 파일의 동작 및 재생성 결과를 확인한다. 실제 GitHub OIDC 발급, SMS 인증 정책·HTTPS 연결, 다른 레포의 원격 Action 호출을 검증한 것은 아니다.
+로컬 테스트는 더미 OIDC·HTTP 응답과 환경변수를 사용해 입력·응답 검증, 충돌 처리, 마스킹 순서, 제한된 재시도와 안전한 실패를 확인한다. 실행 번들 검증은 개발 소스와 배포 파일의 동작 및 재생성 결과를 확인한다. 2026-09-11 [노션 블로그 CI](https://github.com/robinjoon/Notion-Blog/actions/runs/34603784590)에서 원격 `v1.0.0` 호출, 실제 GitHub OIDC 인증, `zot`·`harness` 조회, 환경변수를 사용한 레지스트리 로그인과 이미지 push를 확인했다. 이어 [하네스 릴리스](https://github.com/robinjoon/Simple-K3S-Herness/actions/runs/34604228764)도 성공했다. 완료된 CI 로그에서 실제 비밀번호·하네스 토큰·JWT의 평문 노출은 발견되지 않았다.
 
-아래는 배포와 원격 게시 후 수행할 통합 시험이며 아직 실행하지 않았다.
+아래는 통합 검증 기준이다. 노션 블로그의 허용된 master 실행은 운영 환경에서 확인했고, 잘못된 입력·충돌·여러 줄 보존 등은 로컬 테스트로 검증한다. 모든 비허용 실행 조합을 실제 GitHub에서 재현한 것은 아니다.
 
 | 검토 조건 | 실제 통합 시험과 기대 결과 |
 | --- | --- |
@@ -156,4 +156,4 @@ env:
 | A4. 값의 전달 범위와 실패 동작이 명확하다. | 후속 step에서 값 일치를 출력 없이 검사한다. 충돌 값은 실패하고 응답·JWT가 로그와 outputs에 없다. 별도 job에는 값이 없다. |
 | A5. 기존 앱 CI 의미와 신뢰 조건을 보존한다. | PR은 publish를 실행하지 않는다. 허용된 master 실행으로 zot 로그인·이미지 push·기존 하네스 dispatch가 성공하고 앱 실행용 Secret은 변경되지 않는다. |
 
-실제 CI 전환은 API 서비스 배포·HTTPS 연결 확인과 위 더미 값 통합 시험 후 수행한다. 기존 CI용 GitHub Secrets는 성공 확인과 되돌리기를 위해 우선 남겨 두며 이번 Action 구현에서 삭제하거나 변경하지 않는다.
+소비 앱을 전환할 때는 기존 CI용 GitHub Secrets를 실제 발행·배포 성공 확인까지 유지하고, 대체된 값만 정리한다. 앱 실행용 Kubernetes Secret과 SMS 자체 배포용 GitHub Secrets는 이 전환 대상이 아니다.
