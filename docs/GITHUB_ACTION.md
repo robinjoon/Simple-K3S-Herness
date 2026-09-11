@@ -92,9 +92,9 @@ git diff --exit-code -- dist
 
 ## 다른 레포에서 호출
 
-원격 하위 디렉터리 Action의 문법은 `{owner}/{repo}/{path}@{ref}`다. 따라서 `robinjoon/Simple-K3S-Herness/.github/actions/load-ci-secrets@main`은 유효하다. 경로는 `action.yml`을 포함한 디렉터리까지 적는다. `ref`는 하네스 레포의 ref이며 호출 앱의 브랜치와 같을 필요가 없다. 운영에서는 검토한 전체 40자리 커밋 SHA로 고정한다. [원격 Action 문법](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#example-using-a-public-action-in-a-subdirectory)
+원격 하위 디렉터리 Action의 문법은 `{owner}/{repo}/{path}@{ref}`다. 따라서 `robinjoon/Simple-K3S-Herness/.github/actions/load-ci-secrets@main`은 유효하다. 경로는 `action.yml`을 포함한 디렉터리까지 적는다. `ref`는 하네스 레포의 ref이며 호출 앱의 브랜치와 같을 필요가 없다. 운영에서는 `v1.0.0`처럼 버전 태그를 사용한다. 게시한 태그는 이동하지 않고 변경 시 새 버전을 만든다. [원격 Action 문법](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#example-using-a-public-action-in-a-subdirectory)
 
-다음은 노션 블로그의 기존 `publish` job에서 **변경할 부분만 발췌한 예시**다. 기존 job 전체를 대체하지 않는다. `<ACTION_COMMIT_SHA>` 두 곳은 Action과 실행 번들이 원격에 올라간 뒤 실제 SHA로 바꿔야 한다. 현재 로컬 구현은 있지만 원격에서 호출할 게시본과 그 SHA는 아직 없다.
+다음은 노션 블로그의 기존 `publish` job에서 **변경할 부분만 발췌한 예시**다. 기존 job 전체를 대체하지 않는다. 두 조회 단계는 공통 Action의 `v1.0.0` 태그를 사용한다.
 
 기존 `verify` job, `push.branches: [master]`, `pull_request`, `workflow_dispatch`, concurrency를 유지한다. `publish`의 timeout, 호스트·이미지 Variables, 불변 이미지 태그도 바꾸지 않는다. checkout → 조회 → 설정 검증 → Buildx 준비·로그인 → 빌드·push → 최신 master 검사·하네스 dispatch 순서를 유지한다.
 
@@ -112,11 +112,11 @@ jobs:
     steps:
       # 기존 앱 checkout 유지
       - name: Load registry credentials
-        uses: robinjoon/Simple-K3S-Herness/.github/actions/load-ci-secrets@<ACTION_COMMIT_SHA>
+        uses: robinjoon/Simple-K3S-Herness/.github/actions/load-ci-secrets@v1.0.0
         with:
           app: zot
       - name: Load harness credentials
-        uses: robinjoon/Simple-K3S-Herness/.github/actions/load-ci-secrets@<ACTION_COMMIT_SHA>
+        uses: robinjoon/Simple-K3S-Herness/.github/actions/load-ci-secrets@v1.0.0
         with:
           app: harness
       # 기존 설정 검증과 Buildx 준비 유지
@@ -150,7 +150,7 @@ env:
 
 | 검토 조건 | 실제 통합 시험과 기대 결과 |
 | --- | --- |
-| A1. job 내부 책임을 설명하고 서버 저장소·클래스 구현을 중복하지 않는다. | 다른 레포에서 실제 SHA로 호출하면 npm 설치 없이 runner에서 실행되고 별도 서버·Docker Action을 기동하지 않는다. |
+| A1. job 내부 책임을 설명하고 서버 저장소·클래스 구현을 중복하지 않는다. | 다른 레포에서 게시한 버전 태그로 호출하면 npm 설치 없이 runner에서 실행되고 별도 서버·Docker Action을 기동하지 않는다. |
 | A2. `app` 입력·GET 경로·응답 구조가 API 계약과 일치한다. | `test-app`의 가짜 여러 줄 값을 조회하면 후속 step에서 원문과 같다. 입력 누락·다른 앱 이름 응답·중복 JSON 키·초과 크기·잘못된 키는 값을 반영하기 전에 실패한다. |
 | A3. 호출자 신원과 권한을 정확히 구분한다. | 허용 job은 성공하고 `id-token: write` 없는 job은 실패한다. 서버가 확인한 레포 ID는 호출 앱의 ID이며 토큰 자체는 출력하지 않는다. |
 | A4. 값의 전달 범위와 실패 동작이 명확하다. | 후속 step에서 값 일치를 출력 없이 검사한다. 충돌 값은 실패하고 응답·JWT가 로그와 outputs에 없다. 별도 job에는 값이 없다. |
