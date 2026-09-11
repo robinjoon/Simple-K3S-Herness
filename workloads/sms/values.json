@@ -61,21 +61,11 @@
             }
           },
           {
-            "name": "SPRING_CONFIG_ADDITIONAL_LOCATION",
-            "value": "file:/config/policy.yml"
-          },
-          {
             "name": "SERVER_TOMCAT_USE_RELATIVE_REDIRECTS",
             "value": "true"
           }
         ],
-        "volumeMounts": [
-          {
-            "name": "policy",
-            "mountPath": "/config",
-            "readOnly": true
-          }
-        ]
+        "volumeMounts": []
       }
     ],
     "imagePullSecrets": [
@@ -83,26 +73,12 @@
         "name": "registry-credentials"
       }
     ],
-    "volumes": [
-      {
-        "name": "policy",
-        "configMap": {
-          "name": "policy"
-        }
-      }
-    ]
+    "volumes": []
   },
   "database": {
     "name": "secret_manage_system"
   },
-  "configMaps": [
-    {
-      "name": "policy",
-      "data": {
-        "policy.yml": "sms:\n  ci:\n    repositories:\n      - repository-id: \"1284508552\"\n        repository-owner-id: \"45223837\"\n        repository: robinjoon/Notion-Blog\n        allowed-refs: [refs/heads/master]\n        allowed-events: [push, workflow_dispatch]\n        allowed-workflows:\n          - robinjoon/Notion-Blog/.github/workflows/ci.yml@refs/heads/master\n"
-      }
-    }
-  ],
+  "configMaps": [],
   "services": [
     {
       "name": "web",
