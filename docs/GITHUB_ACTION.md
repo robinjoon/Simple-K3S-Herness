@@ -157,3 +157,5 @@ env:
 | A5. 기존 앱 CI 의미와 신뢰 조건을 보존한다. | PR은 publish를 실행하지 않는다. 허용된 master 실행으로 zot 로그인·이미지 push·기존 하네스 dispatch가 성공하고 앱 실행용 Secret은 변경되지 않는다. |
 
 소비 앱을 전환할 때는 기존 CI용 GitHub Secrets를 실제 발행·배포 성공 확인까지 유지하고, 대체된 값만 정리한다. 앱 실행용 Kubernetes Secret과 SMS 자체 배포용 GitHub Secrets는 이 전환 대상이 아니다.
+
+2026-09-11 노션 블로그 전환에서는 Argo CD `Synced/Healthy`, 새 이미지의 Pod 준비 상태와 블로그·readiness HTTP 200까지 확인했다. 이후 대체된 `HOMELAB_REGISTRY_USERNAME`, `HOMELAB_REGISTRY_PASSWORD`, `HARNESS_ACTIONS_TOKEN` GitHub Secrets를 삭제했다. 노션 API용 두 Secret은 유지하며, 임시 자격증명 이전 workflow와 암호화 Artifact·개인키는 제거했다.
