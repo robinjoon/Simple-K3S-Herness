@@ -126,7 +126,7 @@ metadata:
 spec:
   project: homelab-workloads
   source:
-    repoURL: https://github.com/robinjoon/Simple-K3S-Herness.git
+    repoURL: https://github.com/robinjoon-homelab/Simple-K3S-Herness.git
     targetRevision: main
     path: chart
     helm:

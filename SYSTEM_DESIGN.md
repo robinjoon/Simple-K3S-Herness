@@ -153,7 +153,7 @@ flowchart TB
 
 ## 검토와 이후 동작 확인의 구분
 
-설계 문서는 O1~O5와 각 상세 문서의 기준으로 독립 리뷰하고, Mermaid·JSON·YAML·링크 및 상호 계약을 확인한다. 공통 Action은 더미 값을 사용하는 로컬 계약 시험과 독립 번들 실행을 검증했다. 2026-09-11에는 [노션 블로그 CI](https://github.com/robinjoon/Notion-Blog/actions/runs/34603784590)에서 실제 OIDC 조회·이미지 발행·하네스 호출이 성공했다. [하네스 릴리스](https://github.com/robinjoon/Simple-K3S-Herness/actions/runs/34604228764)가 해당 이미지 태그를 Git에 반영했다.
+설계 문서는 O1~O5와 각 상세 문서의 기준으로 독립 리뷰하고, Mermaid·JSON·YAML·링크 및 상호 계약을 확인한다. 공통 Action은 더미 값을 사용하는 로컬 계약 시험과 독립 번들 실행을 검증했다. 2026-09-11에는 [노션 블로그 CI](https://github.com/robinjoon-homelab/Notion-Blog/actions/runs/34603784590)에서 실제 OIDC 조회·이미지 발행·하네스 호출이 성공했다. [하네스 릴리스](https://github.com/robinjoon-homelab/Simple-K3S-Herness/actions/runs/34604228764)가 해당 이미지 태그를 Git에 반영했다.
 
 구현 이후 전체 연결을 확인할 때는 다음 순서로 진행한다. 각 컴포넌트의 세부 시험은 해당 문서가 정의한다.
 

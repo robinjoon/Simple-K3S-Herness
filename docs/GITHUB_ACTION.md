@@ -92,7 +92,7 @@ git diff --exit-code -- dist
 
 ## 다른 레포에서 호출
 
-원격 하위 디렉터리 Action의 문법은 `{owner}/{repo}/{path}@{ref}`다. 따라서 `robinjoon/Simple-K3S-Herness/.github/actions/load-ci-secrets@main`은 유효하다. 경로는 `action.yml`을 포함한 디렉터리까지 적는다. `ref`는 하네스 레포의 ref이며 호출 앱의 브랜치와 같을 필요가 없다. 운영에서는 `v1.0.0`처럼 버전 태그를 사용한다. 게시한 태그는 이동하지 않고 변경 시 새 버전을 만든다. [원격 Action 문법](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#example-using-a-public-action-in-a-subdirectory)
+원격 하위 디렉터리 Action의 문법은 `{owner}/{repo}/{path}@{ref}`다. 따라서 `robinjoon-homelab/Simple-K3S-Herness/.github/actions/load-ci-secrets@main`은 유효하다. 경로는 `action.yml`을 포함한 디렉터리까지 적는다. `ref`는 하네스 레포의 ref이며 호출 앱의 브랜치와 같을 필요가 없다. 운영에서는 `v1.0.0`처럼 버전 태그를 사용한다. 게시한 태그는 이동하지 않고 변경 시 새 버전을 만든다. [원격 Action 문법](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#example-using-a-public-action-in-a-subdirectory)
 
 다음은 노션 블로그의 기존 `publish` job에서 **변경할 부분만 발췌한 예시**다. 기존 job 전체를 대체하지 않는다. 두 조회 단계는 공통 Action의 `v1.0.0` 태그를 사용한다.
 
@@ -112,11 +112,11 @@ jobs:
     steps:
       # 기존 앱 checkout 유지
       - name: Load registry credentials
-        uses: robinjoon/Simple-K3S-Herness/.github/actions/load-ci-secrets@v1.0.0
+        uses: robinjoon-homelab/Simple-K3S-Herness/.github/actions/load-ci-secrets@v1.0.0
         with:
           app: zot
       - name: Load harness credentials
-        uses: robinjoon/Simple-K3S-Herness/.github/actions/load-ci-secrets@v1.0.0
+        uses: robinjoon-homelab/Simple-K3S-Herness/.github/actions/load-ci-secrets@v1.0.0
         with:
           app: harness
       # 기존 설정 검증과 Buildx 준비 유지
@@ -140,11 +140,11 @@ env:
 
 `HARNESS_ACTIONS_TOKEN`은 하네스 workflow 실행 권한을 가진 기존 CI 자격증명이며, 원격 Action 코드를 내려받기 위한 토큰은 아니다.
 
-2026-09-01 확인 기준 하네스는 공개 레포(`main`), 노션 블로그도 공개 레포(`master`)다. 원격 Action 자체를 가져오기 위한 별도 checkout·PAT는 필요 없다. 예시의 checkout은 앱 소스 빌드용이다. 호출 레포의 Actions 정책에서 해당 Action 사용을 허용해야 한다. 향후 하네스를 비공개로 바꾸면 같은 개인 계정의 다른 비공개 레포에 공유하는 설정을 검토해야 하며, 공개 호출 레포에서도 그대로 쓸 수 있다고 가정하지 않는다. [비공개 레포 간 Action 공유](https://docs.github.com/en/actions/how-tos/reuse-automations/share-across-private-repositories)
+2026-09-01 확인 기준 하네스는 공개 레포(`main`), 노션 블로그도 공개 레포(`master`)다. 원격 Action 자체를 가져오기 위한 별도 checkout·PAT는 필요 없다. 예시의 checkout은 앱 소스 빌드용이다. 호출 레포의 Actions 정책에서 해당 Action 사용을 허용해야 한다. 향후 하네스를 비공개로 바꾸면 같은 Organization의 다른 비공개 레포에 공유하는 설정을 검토해야 하며, 공개 호출 레포에서도 그대로 쓸 수 있다고 가정하지 않는다. [비공개 레포 간 Action 공유](https://docs.github.com/en/actions/how-tos/reuse-automations/share-across-private-repositories)
 
 ## 검토 조건과 검증 범위
 
-로컬 테스트는 더미 OIDC·HTTP 응답과 환경변수를 사용해 입력·응답 검증, 충돌 처리, 마스킹 순서, 제한된 재시도와 안전한 실패를 확인한다. 실행 번들 검증은 개발 소스와 배포 파일의 동작 및 재생성 결과를 확인한다. 2026-09-11 [노션 블로그 CI](https://github.com/robinjoon/Notion-Blog/actions/runs/34603784590)에서 원격 `v1.0.0` 호출, 실제 GitHub OIDC 인증, `zot`·`harness` 조회, 환경변수를 사용한 레지스트리 로그인과 이미지 push를 확인했다. 이어 [하네스 릴리스](https://github.com/robinjoon/Simple-K3S-Herness/actions/runs/34604228764)도 성공했다. 완료된 CI 로그에서 실제 비밀번호·하네스 토큰·JWT의 평문 노출은 발견되지 않았다.
+로컬 테스트는 더미 OIDC·HTTP 응답과 환경변수를 사용해 입력·응답 검증, 충돌 처리, 마스킹 순서, 제한된 재시도와 안전한 실패를 확인한다. 실행 번들 검증은 개발 소스와 배포 파일의 동작 및 재생성 결과를 확인한다. 2026-09-11 [노션 블로그 CI](https://github.com/robinjoon-homelab/Notion-Blog/actions/runs/34603784590)에서 원격 `v1.0.0` 호출, 실제 GitHub OIDC 인증, `zot`·`harness` 조회, 환경변수를 사용한 레지스트리 로그인과 이미지 push를 확인했다. 이어 [하네스 릴리스](https://github.com/robinjoon-homelab/Simple-K3S-Herness/actions/runs/34604228764)도 성공했다. 완료된 CI 로그에서 실제 비밀번호·하네스 토큰·JWT의 평문 노출은 발견되지 않았다.
 
 아래는 통합 검증 기준이다. 노션 블로그의 허용된 master 실행은 운영 환경에서 확인했고, 잘못된 입력·충돌·여러 줄 보존 등은 로컬 테스트로 검증한다. 모든 비허용 실행 조합을 실제 GitHub에서 재현한 것은 아니다.
 

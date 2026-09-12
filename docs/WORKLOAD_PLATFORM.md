@@ -100,7 +100,7 @@ AI 에이전트는 구성 변경에 `release.py`를 사용하지 않고, 앱 CI�
 
 ## 6. Argo CD 정책
 
-`homelab-workloads` AppProject는 소스 저장소를 이 저장소 URL(`https://github.com/robinjoon/Simple-K3S-Herness.git`)로 제한한다. 대상 서버는 기본 Kubernetes API 서버이며 앱마다 namespace가 달라 destinations의 `namespace: "*"`는 유지한다. 이는 모든 namespace에 임의로 배포한다는 운영 목표가 아니라, Child Application의 앱별 namespace를 하나의 Project에서 수용하기 위한 설정이다.
+`homelab-workloads` AppProject는 소스 저장소를 이 저장소 URL(`https://github.com/robinjoon-homelab/Simple-K3S-Herness.git`)로 제한한다. 대상 서버는 기본 Kubernetes API 서버이며 앱마다 namespace가 달라 destinations의 `namespace: "*"`는 유지한다. 이는 모든 namespace에 임의로 배포한다는 운영 목표가 아니라, Child Application의 앱별 namespace를 하나의 Project에서 수용하기 위한 설정이다.
 
 워크로드 Project는 Namespace 생성과 공통 Chart가 직접 만드는 Deployment, Service, ConfigMap, Ingress, cert-manager Certificate, CNPG Database를 허용한다. Argo CD 리소스 트리에서 컨트롤러가 만든 하위 리소스를 확인할 수 있도록 ReplicaSet, Pod, Secret, CertificateRequest, Order, Challenge도 허용한다. 이 하위 리소스들은 JSON Contract가 직접 생성하지 않는다.
 

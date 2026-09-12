@@ -6,7 +6,7 @@ metadata:
 spec:
   description: Project for homelab AI workloads
   sourceRepos:
-    - "https://github.com/robinjoon/Simple-K3S-Herness.git"
+    - "https://github.com/robinjoon-homelab/Simple-K3S-Herness.git"
   destinations:
     - namespace: "*"
       server: https://kubernetes.default.svc

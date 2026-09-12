@@ -157,7 +157,7 @@ SMS의 `harness` 객체에는 이 하네스 저장소로 범위를 제한하고 
     IMAGE_TAG: ${{ steps.image.outputs.tag }}
   run: |
     gh workflow run release-workload-image.yml \
-      --repo robinjoon/Simple-K3S-Herness \
+      --repo robinjoon-homelab/Simple-K3S-Herness \
       --ref main \
       -f app=notion-blog \
       -f container=app \

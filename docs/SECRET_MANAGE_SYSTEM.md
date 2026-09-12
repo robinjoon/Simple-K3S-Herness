@@ -92,17 +92,17 @@ SMS는 GitHub가 발급한 OIDC JWT의 서명, 발급자, audience, 유효시간
 
 실행 신원에는 `repository_id`, `repository_owner_id`, `ref`, `event_name`, `workflow_ref`가 필요하다. 아래 진입 정책에 등록된 레포 항목 하나에서 두 ID가 모두 일치하고, ref·event·workflow가 각각 해당 허용 목록의 값 중 하나와 일치해야 한다. 정책은 하네스가 관리하는 비밀이 아닌 배포 설정이고, 검증과 정책 적용은 SMS의 책임이다. 필요한 발급자 정보를 확보할 수 없어 신원을 검증하지 못하면 503 `IDENTITY_PROVIDER_UNAVAILABLE`로 실패하며 인증을 생략하지 않는다.
 
-노션 블로그의 진입 정책 예시는 다음과 같다. ID와 브랜치는 2026-09-01 조사 기준이며 실제 도입 시 저장소 상태와 대조한다.
+노션 블로그의 진입 정책 예시는 다음과 같다. 소유자 ID와 워크플로 경로는 2026-09-12의 Organization 이전 기준이다. 저장소 ID와 기존 master·이벤트 제한은 유지한다.
 
 ```yaml
 repositories:
   - repositoryId: "1284508552"
-    repositoryOwnerId: "45223837"
-    repository: robinjoon/Notion-Blog # 사람이 읽는 식별 정보
+    repositoryOwnerId: "328391212"
+    repository: robinjoon-homelab/Notion-Blog # 사람이 읽는 식별 정보
     allowedRefs: [refs/heads/master]
     allowedEvents: [push, workflow_dispatch]
     allowedWorkflows:
-      - robinjoon/Notion-Blog/.github/workflows/ci.yml@refs/heads/master
+      - robinjoon-homelab/Notion-Blog/.github/workflows/ci.yml@refs/heads/master
 ```
 
 `master`는 위 레포의 정책 값이며 모든 앱에 강제하는 이름이 아니다. 정책에 없는 레포와 `pull_request`, `pull_request_target`은 거부한다. 허용 여부는 명시된 ID와 실행 클레임으로 판단한다. 일반 JavaScript Action 호출에는 재사용 워크플로용 `job_workflow_ref`를 요구하지 않으며, job 이름을 OIDC가 증명하는 신원으로 취급하지 않는다. [GitHub OIDC 클레임](https://docs.github.com/en/actions/reference/security/oidc)
@@ -145,7 +145,7 @@ CI 자격증명은 **앱 수준에서 암호화하지 않고 평문으로 보관
 
 ## 5. 외부 계약 검증
 
-아래는 SMS의 외부 계약 검증 기준이다. 2026-09-10 배포 점검에서는 더미 객체 등록·조회·교체·삭제, 입력 검증, CSRF, 비인증 요청 거부와 상태 확인을 검증했다. 2026-09-11 [노션 블로그 CI](https://github.com/robinjoon/Notion-Blog/actions/runs/34603784590)에서는 실제 OIDC로 `zot`·`harness` 조회에 성공했다. 모든 장애·실행 출처 조합을 운영 환경에서 재현한 것은 아니다. 내부 테이블·라이브러리·관리 도구의 구조를 검사하지 않고 호출자가 관찰하는 결과를 확인한다.
+아래는 SMS의 외부 계약 검증 기준이다. 2026-09-10 배포 점검에서는 더미 객체 등록·조회·교체·삭제, 입력 검증, CSRF, 비인증 요청 거부와 상태 확인을 검증했다. 2026-09-11 [노션 블로그 CI](https://github.com/robinjoon-homelab/Notion-Blog/actions/runs/34603784590)에서는 실제 OIDC로 `zot`·`harness` 조회에 성공했다. 모든 장애·실행 출처 조합을 운영 환경에서 재현한 것은 아니다. 내부 테이블·라이브러리·관리 도구의 구조를 검사하지 않고 호출자가 관찰하는 결과를 확인한다.
 
 | 조건 | 관찰할 결과 |
 | --- | --- |
