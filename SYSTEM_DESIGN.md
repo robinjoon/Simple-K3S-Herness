@@ -1,6 +1,8 @@
 # 홈랩 하네스 전체 설계
 
-상태: SMS 배포와 공통 Action `v1.0.0` 게시 완료. 노션 블로그 CI에 SMS 조회를 적용했다. 운영 기준일: 2026-09-11.
+상태: SMS 배포·공통 Action `v1.0.0` 게시·노션 블로그 CI 전환과 `robinjoon-homelab` Organization 이전 완료. 운영 기준일: 2026-09-12.
+
+전체 앱과 배포·운영 서비스의 대표 관계도는 [단일 draw.io 다이어그램](docs/diagrams/README.md)이다. 개인용 앱들은 동등한 배포 대상이며 특정 앱이 중심이 아니다. 아래 Mermaid는 그중 CI 자격증명 전달과 하네스의 책임 경계를 자세히 설명한다. 새 에이전트는 [공통 시작 지침](AGENTS.md)에서 시스템 요약과 작업별 읽기 경로를 먼저 확인한다.
 
 ## 문서의 수준과 검토 기준
 
@@ -21,7 +23,7 @@ C4의 수준은 문서의 관심사를 정하는 기준으로 사용한다. HTTP
 - **O2 — 관계:** 각 화살표는 누가 무엇을 주거나 요청하는지 설명한다. Action은 호출 앱의 CI job 안에 있고, GitHub가 실행 신원을 발급한다.
 - **O3 — 경계:** 운영자는 SMS에서 CI 값을 직접 관리하고 하네스는 관리 API를 호출하지 않는다. CI 자격증명 전달과 배포된 앱의 실행 설정을 구분하며, SMS에서 앱의 Kubernetes Secret으로 이어지는 쓰기 경로는 없다.
 - **O4 — 단순화:** 앱 간 격리 최소화, 공통 자격증명 공유, GitHub-hosted runner 사용을 유지한다. 앱별 ACL이나 셀프 호스팅 러너를 추가하지 않는다.
-- **O5 — 일관성:** 상세 계약은 두 하위 문서가 소유한다. 기존 구성·신규 설계·검증 완료 여부를 구분하고 깨진 링크나 서로 다른 계약을 남기지 않는다.
+- **O5 — 일관성:** 상세 계약은 두 하위 문서가 소유한다. 현재 구성·향후 제안·검증 완료 여부를 구분하고 깨진 링크나 서로 다른 계약을 남기지 않는다.
 
 ## 목적과 원칙
 
@@ -36,14 +38,14 @@ C4의 수준은 문서의 관심사를 정하는 기준으로 사용한다. HTTP
 
 ## L1 — 시스템 관계
 
-아래는 전체 관계를 보여주는 시스템 랜드스케이프다. 사람과 소프트웨어 시스템만 표시하며 내부 파일·프로세스와 논리 DB 구분은 다음 수준에서 설명한다. `신규` 표시가 없는 시스템은 기존 배포 경로에 있다.
+아래는 전체 관계를 보여주는 시스템 랜드스케이프다. 사람과 소프트웨어 시스템만 표시하며 내부 파일·프로세스와 논리 DB 구분은 다음 수준에서 설명한다. SMS와 공통 Action도 현재 운영 중인 배포 경로에 포함된다.
 
 ```mermaid
 flowchart LR
     operator["운영자<br/>Person"]
     github["GitHub<br/>소스 관리 · Actions · 실행 신원 발급"]
     harness["배포 하네스<br/>설정 변경 · 릴리스 요청 · GitOps 동기화"]
-    sms["Secret Manage System · 신규<br/>CI 자격증명 보관·관리·조회"]
+    sms["Secret Manage System<br/>CI 자격증명 보관·관리·조회"]
     registry["zot<br/>배포 이미지 보관"]
     database["공유 PostgreSQL<br/>공통 데이터 저장"]
     apps["각 앱<br/>노션 블로그 등 실행 중인 서비스"]
@@ -65,7 +67,7 @@ flowchart LR
 
 ## L2 — 컨테이너 수준 시스템 랜드스케이프
 
-아래는 같은 기능을 실행 프로그램과 저장소로 확대한 논리 구조다. 경계는 관리 책임을 나타내며 물리 노드·Pod 개수·Ingress 규칙을 표현하는 배포도는 아니다. `신규` 부분만 이번 설계가 추가하며, 공통 Action은 기존 앱 CI job의 일부가 된다.
+아래는 같은 기능을 실행 프로그램과 저장소로 확대한 논리 구조다. 경계는 관리 책임을 나타내며 물리 노드·Pod 개수·Ingress 규칙을 표현하는 배포도는 아니다. 공통 Action은 앱 CI job의 일부이며, SMS의 구현 저장소와 하네스의 배포 선언은 별도로 관리한다.
 
 ```mermaid
 flowchart TB
@@ -74,7 +76,7 @@ flowchart TB
 
     subgraph appDelivery["각 앱의 빌드·배포"]
         appRepo[("앱 Git 저장소<br/>앱 소스와 CI 워크플로")]
-        appCI["앱 CI job<br/>GitHub-hosted runner<br/>공통 Action 실행 부분만 신규"]
+        appCI["앱 CI job<br/>GitHub-hosted runner<br/>공통 Action 실행"]
     end
 
     subgraph harnessBoundary["배포 하네스"]
@@ -84,7 +86,7 @@ flowchart TB
         argo["Argo CD<br/>Git 배포 계약 동기화"]
     end
 
-    subgraph smsBoundary["Secret Manage System · 신규"]
+    subgraph smsBoundary["Secret Manage System"]
         sms["SMS 웹 애플리케이션 · Kotlin / Spring<br/>템플릿 기반 운영자 UI · 관리 API · CI 조회 API"]
     end
 
@@ -124,14 +126,16 @@ flowchart TB
 | 요소 | 책임과 실행 범위 |
 | --- | --- |
 | 각 앱 레포와 앱 CI | 앱을 검증·빌드하고, 필요한 CI 값을 조회해 이미지 발행과 릴리스 요청에 사용한다. |
-| 공통 GitHub Action · 신규 | 호출한 앱의 job 안에서 인증·조회·응답 처리·마스킹·환경변수 전달을 수행한다. 별도 job이나 서버가 아니다. |
+| 공통 GitHub Action | 호출한 앱의 job 안에서 인증·조회·응답 처리·마스킹·환경변수 전달을 수행한다. 별도 job이나 서버가 아니다. |
 | GitHub OIDC | 실행 출처를 증명한다. Secret 저장소도 아니며 홈서버로의 네트워크 연결을 제공하지도 않는다. |
-| Secret Manage System · 신규 | 운영자가 직접 사용하는 템플릿 기반 UI·관리 API와 CI 조회 API를 제공한다. 운영자 인증과 CI OIDC 조회 권한을 구분하며, 앱 레포별로 조회 권한을 나누지 않는다. |
+| Secret Manage System | 운영자가 직접 사용하는 템플릿 기반 UI·관리 API와 CI 조회 API를 제공한다. 운영자 인증과 CI OIDC 조회 권한을 구분하며, 앱 레포별로 조회 권한을 나누지 않는다. |
 | 공유 PostgreSQL · 기존 | `secret_manage_system`과 앱별 논리 DB를 같은 Cluster에 두고, 인스턴스와 `defaultuser` 계정을 공유한다. |
 | 워크로드 구성 CLI | 운영자나 AI 에이전트가 기존 앱 계약을 생성·수정한다. CLI의 파일 변경과 운영자의 Git 반영은 별도 단계다. |
 | 하네스 Git·릴리스 job·Argo CD | 기존 이미지 태그 변경과 GitOps 배포를 계속 담당한다. 시크릿 관리 앱이 이 경로를 대체하지 않는다. |
 | zot | 같은 공통 계정으로 이미지 발행과 pull을 지원한다. 계정 자체의 권한은 기존과 같다. |
 | 앱 실행 프로세스·기존 Secrets | 기존 앱의 런타임 설정을 유지하고, `shared-db-app` 접속 정보는 기존 계약으로 SMS에도 주입한다. CI에서 받은 값은 앱 Pod에 자동 주입하지 않는다. |
+
+소스 저장소는 `robinjoon-homelab`에서 관리한다. 하네스는 공통 배포 도구와 Action을, 별도 비공개 `Secret-Manager-System` 저장소는 SMS 구현을, 각 앱 저장소는 앱 코드와 CI를 소유한다. SMS의 CI 자격증명과 OIDC 허용 정책은 PostgreSQL에 저장하며 운영자가 SMS에서 직접 관리한다. OIDC 정책은 하네스의 워크로드 values에 넣지 않는다.
 
 ## 주요 흐름과 책임 경계
 
@@ -145,9 +149,10 @@ flowchart TB
 
 ## 운영 전제와 장애 영향
 
-- 앱 CI와 하네스 릴리스 job은 GitHub-hosted runner를 사용한다. 이전 ARC 추가 계획과 관련 스테이징 변경은 제거한다.
-- 시크릿 관리 앱은 단일 인스턴스로 시작하고 기존 공유 PostgreSQL의 `secret_manage_system` 논리 DB를 사용한다. 별도 DB 인스턴스·계정·고가용성·자동 장애조치는 추가하지 않는다. 구체적인 저장 계약은 [저장 설계](docs/SECRET_MANAGE_SYSTEM.md)를 따른다.
+- 앱 CI와 하네스 릴리스 job은 GitHub-hosted runner를 사용한다. 셀프 호스팅 러너는 운영하지 않는다.
+- 시크릿 관리 앱은 단일 인스턴스로 운영하며 기존 공유 PostgreSQL의 `secret_manage_system` 논리 DB를 사용한다. 별도 DB 인스턴스·계정·고가용성·자동 장애조치는 추가하지 않는다. 구체적인 저장 계약은 [저장 설계](docs/SECRET_MANAGE_SYSTEM.md)를 따른다.
 - 앱 CI에서 시크릿 관리 앱과 zot 양쪽으로 접속 가능해야 한다. OIDC와 네트워크 연결은 별개이며, 한쪽만 연결됐다고 전체 배포가 가능하지는 않다. 시크릿 관리 앱은 HTTPS를 사용한다. VPN을 추가한다면 네트워크 접근 수단으로 다루며 OIDC를 대체하지 않는다.
+- SMS 자체 CI는 서비스 중단 중에도 SMS를 배포할 수 있도록 GitHub Secrets를 유지한다. SMS를 사용하는 소비 앱 CI와 이 예외를 구분한다.
 - 시크릿 관리 앱이나 DB가 중단되면 새로운 CI 값 조회가 실패한다. 이미 실행 중인 앱은 이 서비스에 의존하지 않는다. 같은 job이 이미 받은 정적 자격증명이 서비스 중단만으로 무효화되지는 않는다.
 - 공유 DB 자격증명을 가진 신뢰된 앱과 클러스터 관리자는 저장된 CI 값을 직접 읽고 변경·삭제할 수 있다. 앱 간 격리를 줄이더라도 외부 접근 인증이나 비밀 값의 Git·로그 노출 방지는 유지한다.
 

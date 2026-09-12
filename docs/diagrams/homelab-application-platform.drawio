@@ -1,0 +1,256 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" agent="Codex" version="24.7.17" type="device">
+  <diagram id="homelab-unified" name="홈랩 앱 운영 전체 구조">
+    <mxGraphModel dx="3540" dy="1890" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3540" pageHeight="1890" math="0" shadow="0" background="#FFFFFF">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="홈랩 개인용 앱과 배포·운영 서비스" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Arial;fontSize=38;fontColor=#0F172A;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="30" width="3000" height="50" />
+        </mxCell>
+        <mxCell id="subtitle" value="왼쪽 → 오른쪽: 소스 · CI · 릴리스 · 배포 선언 · 자동 배포 · 앱 실행  |  위: 운영·외부 배포원  /  아래: 이미지·인증·앱 설정과 데이터" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Arial;fontSize=19;fontColor=#475569;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="92" width="3250" height="40" />
+        </mxCell>
+        <mxCell id="ci" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#1D4ED8;margin-bottom:8px&quot;&gt;GITHUB&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;앱 CI&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;테스트·이미지 발행·SMS 조회&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#60A5FA;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="620" y="600" width="300" height="140" />
+        </mxCell>
+        <mxCell id="zot" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#9A3412;margin-bottom:8px&quot;&gt;홈 k3s&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;zot&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;컨테이너 이미지 저장소&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#FDBA74;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1740" y="980" width="320" height="140" />
+        </mxCell>
+        <mxCell id="runtime" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#0F766E;margin-bottom:8px&quot;&gt;홈 k3s&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;k3s&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;앱 실행과 외부 접속&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F0FDFA;strokeColor=#5EEAD4;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2540" y="600" width="300" height="140" />
+        </mxCell>
+        <mxCell id="release" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#1D4ED8;margin-bottom:8px&quot;&gt;GITHUB · 하네스&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;하네스 릴리스 job&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;새 이미지의 배포 요청 반영&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#60A5FA;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1100" y="600" width="300" height="140" />
+        </mxCell>
+        <mxCell id="git" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#1D4ED8;margin-bottom:8px&quot;&gt;GITHUB · 하네스&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;하네스 Git 저장소&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;앱별 배포 선언·Chart 참조&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#60A5FA;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1580" y="600" width="300" height="140" />
+        </mxCell>
+        <mxCell id="argo" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#0F766E;margin-bottom:8px&quot;&gt;홈 k3s&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;Argo CD&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;선언한 상태로 자동 배포&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F0FDFA;strokeColor=#5EEAD4;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2060" y="600" width="300" height="140" />
+        </mxCell>
+        <mxCell id="upstream" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#6D28D9;margin-bottom:8px&quot;&gt;EXTERNAL&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;오픈소스 배포원&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;공식 컨테이너 이미지&lt;br&gt;Helm Chart 저장소&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F5F3FF;strokeColor=#C4B5FD;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2220" y="200" width="340" height="140" />
+        </mxCell>
+        <mxCell id="cli" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#1D4ED8;margin-bottom:8px&quot;&gt;운영자 PC · 하네스&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;워크로드 구성 CLI&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;앱 등록·배포 설정 변경&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#60A5FA;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1580" y="200" width="300" height="140" />
+        </mxCell>
+        <mxCell id="operator" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#334155;margin-bottom:8px&quot;&gt;PERSON&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;운영자&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;앱 사용 · 코드·구성·시크릿 관리&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F1F5F9;strokeColor=#94A3B8;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="140" y="200" width="280" height="140" />
+        </mxCell>
+        <mxCell id="apprepo" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#1D4ED8;margin-bottom:8px&quot;&gt;GITHUB&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;앱 소스 저장소&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;직접 개발한 앱별 저장소&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#60A5FA;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="140" y="600" width="280" height="140" />
+        </mxCell>
+        <mxCell id="sms" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#0F766E;margin-bottom:8px&quot;&gt;홈 k3s&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;SMS&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;CI 시크릿·접근 정책 관리&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F0FDFA;strokeColor=#5EEAD4;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="660" y="1440" width="340" height="160" />
+        </mxCell>
+        <mxCell id="oidc" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#6D28D9;margin-bottom:8px&quot;&gt;EXTERNAL&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;GitHub OIDC&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;CI 실행 신원 증명&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F5F3FF;strokeColor=#C4B5FD;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="140" y="1440" width="280" height="160" />
+        </mxCell>
+        <mxCell id="secrets" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#9A3412;margin-bottom:8px&quot;&gt;홈 k3s&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;k3s Secrets&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;앱 실행용 시크릿 관리&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#FDBA74;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="3120" y="1020" width="340" height="160" />
+        </mxCell>
+        <mxCell id="cert" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#0F766E;margin-bottom:8px&quot;&gt;홈 k3s&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;cert-manager&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;TLS 인증서 관리&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F0FDFA;strokeColor=#5EEAD4;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="2900" y="200" width="300" height="140" />
+        </mxCell>
+        <mxCell id="database" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#9A3412;margin-bottom:8px&quot;&gt;홈 k3s&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;공유 PostgreSQL · CNPG&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;공통 데이터 저장·관리&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#FFF7ED;strokeColor=#FDBA74;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="3020" y="1440" width="380" height="160" />
+        </mxCell>
+        <mxCell id="apps" value="&lt;div style=&quot;font-size:11px;font-weight:bold;color:#0F766E;margin-bottom:8px&quot;&gt;홈 k3s · 동등한 배포 대상&lt;/div&gt;&lt;div style=&quot;font-size:20px;font-weight:bold;color:#0F172A;line-height:1.3&quot;&gt;개인용 애플리케이션들&lt;/div&gt;&lt;div style=&quot;font-size:14px;color:#475569;line-height:1.5;margin-top:8px&quot;&gt;직접 개발 앱 · 설치형 오픈소스 앱&lt;/div&gt;" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#F0FDFA;strokeColor=#5EEAD4;strokeWidth=1.5;align=left;verticalAlign=middle;spacing=18;fontFamily=Arial;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="3020" y="600" width="380" height="140" />
+        </mxCell>
+        <mxCell id="op-cli" value="배포 구성 작성" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#94A3B8;dashed=1;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=1.0;exitY=0.42857142857142855;exitPerimeter=0;entryX=0.0;entryY=0.42857142857142855;entryPerimeter=0;" edge="1" parent="1" source="operator" target="cli">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points" />
+            <mxPoint as="offset" x="0.0" y="-24.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cli-git" value="배포 구성 반영" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#0F766E;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=0.13333333333333333;exitY=1.0;exitPerimeter=0;entryX=0.13333333333333333;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="cli" target="git">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points" />
+            <mxPoint as="offset" x="-107.0" y="0.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="argo-git" value="배포 선언&lt;br&gt;(Argo CD가 조회)" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=3;strokeColor=#2563EB;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=164;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=1.0;exitY=0.2857142857142857;exitPerimeter=0;entryX=0.0;entryY=0.2857142857142857;entryPerimeter=0;" edge="1" parent="1" source="git" target="argo">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points" />
+            <mxPoint as="offset" x="0.0" y="-34.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="op-repo" value="앱 코드 변경" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#94A3B8;dashed=1;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=0.5;exitY=1.0;exitPerimeter=0;entryX=0.5;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="operator" target="apprepo">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points" />
+            <mxPoint as="offset" x="107.0" y="0.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="repo-ci" value="소스·workflow" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=3;strokeColor=#2563EB;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=164;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=1.0;exitY=0.2857142857142857;exitPerimeter=0;entryX=0.0;entryY=0.2857142857142857;entryPerimeter=0;" edge="1" parent="1" source="apprepo" target="ci">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points" />
+            <mxPoint as="offset" x="0.0" y="-24.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ci-release" value="이미지 발행 후&lt;br&gt;배포 요청" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=3;strokeColor=#2563EB;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=164;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=1.0;exitY=0.2857142857142857;exitPerimeter=0;entryX=0.0;entryY=0.2857142857142857;entryPerimeter=0;" edge="1" parent="1" source="ci" target="release">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points" />
+            <mxPoint as="offset" x="0.0" y="-34.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="release-git" value="이미지 태그&lt;br&gt;변경·커밋" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=3;strokeColor=#2563EB;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=164;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=1.0;exitY=0.2857142857142857;exitPerimeter=0;entryX=0.0;entryY=0.2857142857142857;entryPerimeter=0;" edge="1" parent="1" source="release" target="git">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points" />
+            <mxPoint as="offset" x="0.0" y="-34.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="argo-runtime" value="배포 요청" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=3;strokeColor=#2563EB;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=164;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=1.0;exitY=0.2857142857142857;exitPerimeter=0;entryX=0.0;entryY=0.2857142857142857;entryPerimeter=0;" edge="1" parent="1" source="argo" target="runtime">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points" />
+            <mxPoint as="offset" x="0.0" y="-24.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ci-zot" value="빌드한 이미지 push" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#C2410C;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=1.0;exitY=0.42857142857142855;exitPerimeter=0;entryX=0.0;entryY=0.2857142857142857;entryPerimeter=0;" edge="1" parent="1" source="ci" target="zot">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points">
+              <mxPoint x="1060" y="660" />
+              <mxPoint x="1060" y="1020" />
+            </Array>
+            <mxPoint as="offset" x="250.0" y="-24.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="runtime-zot" value="실행 이미지 공급&lt;br&gt;(k3s가 pull)" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#C2410C;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=1.0;exitY=0.2857142857142857;exitPerimeter=0;entryX=0.0;entryY=0.7142857142857143;entryPerimeter=0;" edge="1" parent="1" source="zot" target="runtime">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points">
+              <mxPoint x="2500" y="1020" />
+              <mxPoint x="2500" y="700" />
+            </Array>
+            <mxPoint as="offset" x="-180.0" y="-34.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="runtime-apps" value="앱 실행·관리" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=3;strokeColor=#2563EB;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=164;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=1.0;exitY=0.2857142857142857;exitPerimeter=0;entryX=0.0;entryY=0.2857142857142857;entryPerimeter=0;" edge="1" parent="1" source="runtime" target="apps">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points" />
+            <mxPoint as="offset" x="0.0" y="-24.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="argo-upstream" value="참조된 Helm Chart 조회" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#0F766E;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=0.4666666666666667;exitY=0.0;exitPerimeter=0;entryX=0.11764705882352941;entryY=1.0;entryPerimeter=0;" edge="1" parent="1" source="argo" target="upstream">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points">
+              <mxPoint x="2200" y="380" />
+              <mxPoint x="2260" y="380" />
+            </Array>
+            <mxPoint as="offset" x="-107.0" y="50.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="runtime-upstream" value="공식 이미지 pull" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#0F766E;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=0.13333333333333333;exitY=0.0;exitPerimeter=0;entryX=0.8823529411764706;entryY=1.0;entryPerimeter=0;" edge="1" parent="1" source="runtime" target="upstream">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points">
+              <mxPoint x="2580" y="380" />
+              <mxPoint x="2520" y="380" />
+            </Array>
+            <mxPoint as="offset" x="-107.0" y="50.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="op-secrets" value="실행용 원본 값 등록" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#94A3B8;dashed=1;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=0.0;exitY=0.7142857142857143;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="operator" target="secrets">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points">
+              <mxPoint x="80" y="300" />
+              <mxPoint x="80" y="1660" />
+              <mxPoint x="3440" y="1660" />
+              <mxPoint x="3440" y="1220" />
+              <mxPoint x="3080" y="1220" />
+              <mxPoint x="3080" y="1100" />
+            </Array>
+            <mxPoint as="offset" x="230.0" y="-24.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="secrets-apps" value="환경변수·파일로&lt;br&gt;앱 설정 공급" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#0F766E;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=0.11764705882352941;exitY=0.0;exitPerimeter=0;entryX=0.47368421052631576;entryY=1.0;entryPerimeter=0;" edge="1" parent="1" source="secrets" target="apps">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points">
+              <mxPoint x="3160" y="780" />
+              <mxPoint x="3200" y="780" />
+            </Array>
+            <mxPoint as="offset" x="107.0" y="40.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="apps-db" value="데이터 저장·조회&lt;br&gt;(필요한 앱만)" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#0F766E;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=0.10526315789473684;exitY=1.0;exitPerimeter=0;entryX=0.10526315789473684;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="apps" target="database">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points" />
+            <mxPoint as="offset" x="-107.0" y="0.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="op-sms" value="CI 시크릿·허용 정책 관리" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#94A3B8;dashed=1;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=0.14285714285714285;exitY=1.0;exitPerimeter=0;entryX=0.0;entryY=0.5;entryPerimeter=0;" edge="1" parent="1" source="operator" target="sms">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points">
+              <mxPoint x="180" y="380" />
+              <mxPoint x="100" y="380" />
+              <mxPoint x="100" y="1640" />
+              <mxPoint x="620" y="1640" />
+              <mxPoint x="620" y="1520" />
+            </Array>
+            <mxPoint as="offset" x="107.0" y="-280.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sms-db" value="CI 시크릿·허용 정책 저장" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#0F766E;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=1.0;exitY=0.25;exitPerimeter=0;entryX=0.0;entryY=0.25;entryPerimeter=0;" edge="1" parent="1" source="sms" target="database">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points" />
+            <mxPoint as="offset" x="0.0" y="-24.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ci-oidc" value="OIDC 토큰 발급" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#7C3AED;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=0.0;exitY=0.7142857142857143;exitPerimeter=0;entryX=0.8571428571428571;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="ci" target="oidc">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points">
+              <mxPoint x="580" y="700" />
+              <mxPoint x="580" y="1400" />
+              <mxPoint x="380" y="1400" />
+            </Array>
+            <mxPoint as="offset" x="-107.0" y="-100.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="sms-oidc" value="서명 검증용&lt;br&gt;공개 키 조회" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#7C3AED;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=0.0;exitY=0.25;exitPerimeter=0;entryX=1.0;entryY=0.25;entryPerimeter=0;" edge="1" parent="1" source="sms" target="oidc">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points" />
+            <mxPoint as="offset" x="0.0" y="-34.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ci-sms" value="OIDC 인증·&lt;br&gt;CI 자격증명 조회" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#7C3AED;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=1.0;exitY=0.7142857142857143;exitPerimeter=0;entryX=0.8823529411764706;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="ci" target="sms">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points">
+              <mxPoint x="960" y="700" />
+            </Array>
+            <mxPoint as="offset" x="-107.0" y="20.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="note1" value="Traefik은 k3s의 기본 접속 기능에, Reflector는 실행용 시크릿 관리에 포함했습니다. CNPG와 PostgreSQL은 하나의 DB 서비스입니다." style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Arial;fontSize=17;fontColor=#475569;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="1750" width="3300" height="30" />
+        </mxCell>
+        <mxCell id="note2" value="SMS는 현재 PostgreSQL을 사용합니다. SMS의 Kubernetes Secret 직접 저장은 아직 구현되지 않았습니다." style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Arial;fontSize=17;fontColor=#475569;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="1785" width="3300" height="30" />
+        </mxCell>
+        <mxCell id="legend" value="굵은 파랑: 주 배포 흐름  /  주황: 이미지 전달  /  보라: CI 인증·시크릿 조회  /  회색 점선: 운영자 작업  |  홈 k3s 배지: 클러스터 내부 서비스" style="text;html=0;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontFamily=Arial;fontSize=16;fontColor=#475569;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="1825" width="3300" height="30" />
+        </mxCell>
+        <mxCell id="op-apps" value="앱 사용" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#94A3B8;dashed=1;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=1.0;exitY=0.2857142857142857;exitPerimeter=0;entryX=0.47368421052631576;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="operator" target="apps">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points">
+              <mxPoint x="460" y="240" />
+              <mxPoint x="460" y="160" />
+              <mxPoint x="3240" y="160" />
+              <mxPoint x="3240" y="560" />
+              <mxPoint x="3200" y="560" />
+            </Array>
+            <mxPoint as="offset" x="-180.0" y="-24.0" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cert-runtime" value="TLS 인증서 제공" style="edgeStyle=none;noEdgeStyle=1;rounded=0;html=1;endArrow=block;endFill=1;endSize=10;strokeWidth=2;strokeColor=#0F766E;dashed=0;fontFamily=Arial;fontSize=16;fontColor=#334155;labelBackgroundColor=#FFFFFF;labelWidth=190;align=center;verticalAlign=middle;whiteSpace=wrap;exitX=0.0;exitY=0.7142857142857143;exitPerimeter=0;entryX=0.8666666666666667;entryY=0.0;entryPerimeter=0;" edge="1" parent="1" source="cert" target="runtime">
+          <mxGeometry as="geometry" x="0" y="0" relative="1">
+            <Array as="points">
+              <mxPoint x="2860" y="300" />
+              <mxPoint x="2860" y="560" />
+              <mxPoint x="2800" y="560" />
+            </Array>
+            <mxPoint as="offset" x="-107.0" y="-30.0" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

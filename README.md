@@ -2,6 +2,18 @@
 
 K3s 홈랩에서 AI 에이전트가 제한된 JSON 계약과 CLI만으로 애플리케이션을 배포하도록 하는 소형 GitOps 하네스입니다. 에이전트는 Kubernetes YAML이나 Argo CD Application을 직접 작성하지 않고, `tools/platform.py`를 통해 `workloads/<app>/values.json`을 관리합니다. 앱 CI의 새 버전 배포는 별도의 `tools/release.py`가 기존 컨테이너의 이미지 태그만 변경합니다.
 
+## 새 에이전트 세션 시작
+
+[AGENTS.md](AGENTS.md)에 전체 시스템 요약, 저장소별 책임, CI·앱 실행용 Secret의 구분과 작업별 문서 경로를 모았습니다. 전체 운영 관계는 [단일 draw.io 다이어그램](docs/diagrams/README.md)을 참고합니다. 처음에는 공통 요약을 읽고, 상세 계약·운영 명령은 맡은 작업에 해당하는 부분만 읽습니다.
+
+`AGENTS.md`를 지원하는 에이전트는 이를 공통 진입점으로 사용합니다. [CLAUDE.md](CLAUDE.md)와 [GEMINI.md](GEMINI.md)는 같은 파일을 import하며, [Copilot 지침](.github/copilot-instructions.md)은 해당 파일을 읽도록 안내합니다. `skills/`는 일반 저장소 디렉터리이므로 존재만으로 모든 도구에 자동 설치·로딩되지는 않습니다. 워크로드 작업 시 공통 지침에서 스킬을 명시적으로 읽도록 연결했습니다.
+
+자동 적용 여부는 도구·버전·프로젝트 열기 위치·지침 설정에 따라 다릅니다. 모든 종류의 채팅이나 원격 에이전트가 저장소를 자동으로 읽는다고 보장할 수는 없습니다. 자동 지침을 지원하지 않는 도구, 다른 디렉터리에서 시작한 세션, 컨텍스트를 넘기지 않은 하위 에이전트에는 다음 시작 문구를 함께 전달합니다.
+
+> 이 저장소의 루트 AGENTS.md를 먼저 읽고, 전체 시스템과 작업 경계를 파악한 뒤 작업에 해당하는 문서를 읽어 진행해 줘.
+
+[Claude Code import](https://code.claude.com/docs/en/memory), [Gemini CLI import](https://geminicli.com/docs/reference/memport/), [Cursor 규칙](https://docs.cursor.com/context/rules-for-ai), [Copilot 저장소 지침](https://docs.github.com/en/copilot/how-tos/configure-custom-instructions-in-your-ide/add-repository-instructions-in-your-ide)의 지원 방식에 맞춘 파일 구성입니다. 각 도구에서 실제 새 세션을 실행해 자동 로딩을 확인한 결과는 아닙니다.
+
 ## 설계 범위
 
 - 제1원칙은 **앱 간 격리 최소화**입니다. 단일 운영자의 앱들을 함께 신뢰하고 공통 인프라·계정·Secret을 공유합니다. 앱별 네임스페이스는 리소스 정리와 배포 관리에 사용하며, 엄격한 보안 격리를 목표로 하지 않습니다. 외부 접근 인증과 Secret의 Git·로그 노출 방지는 유지합니다.

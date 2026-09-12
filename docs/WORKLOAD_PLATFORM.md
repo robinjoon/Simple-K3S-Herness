@@ -86,7 +86,7 @@ validate NAME | validate --all
 render NAME
 ```
 
-에이전트는 CLI를 우회해 values 파일, Argo Application, Helm Chart를 직접 수정하지 않는다. `delete`는 제공하지 않으므로 삭제가 필요하면 운영자가 별도 절차를 수행한다.
+일반 앱 배포 구성 작업에서는 에이전트가 CLI를 우회해 values 파일, Argo Application, Helm Chart를 직접 수정하지 않는다. 하네스 자체 기능을 개발하는 작업은 이 제한과 구분하며, 요청된 범위의 CLI·Chart·계약을 함께 수정하고 검증한다. `delete`는 제공하지 않으므로 삭제가 필요하면 운영자가 별도 절차를 수행한다.
 
 검증은 JSON Schema와 Helm lint/렌더링에 초점을 둔다. 이것은 클러스터 API 검증, Secret 존재 확인, 네트워크 연결 확인 또는 무중단 배포 보장이 아니다.
 
