@@ -21,6 +21,10 @@ K3s 홈랩에서 AI 에이전트가 제한된 JSON 계약과 CLI만으로 애플
 | [Secret Manage System](docs/SECRET_MANAGE_SYSTEM.md) | API 규약과 공유 PostgreSQL 저장·운영 설계 |
 | [공통 GitHub Action](docs/GITHUB_ACTION.md) | Action의 구조, 호출 권한, 다른 레포에서의 사용법 |
 
+## 저장소 소유권
+
+하네스, SMS, Notion-Blog는 `robinjoon-homelab` Organization에서 관리합니다. 하네스와 블로그는 공개, SMS는 비공개입니다. 로컬 origin, Argo CD 소스 URL, 공통 Action의 `uses`와 CI의 dispatch 대상은 새 소유자 경로를 사용합니다. 공통 Action 버전 `v1.0.0`은 이전 전과 같은 태그를 유지합니다.
+
 ## 저장소 구조
 
 ```text

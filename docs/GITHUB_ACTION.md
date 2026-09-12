@@ -159,3 +159,9 @@ env:
 소비 앱을 전환할 때는 기존 CI용 GitHub Secrets를 실제 발행·배포 성공 확인까지 유지하고, 대체된 값만 정리한다. 앱 실행용 Kubernetes Secret과 SMS 자체 배포용 GitHub Secrets는 이 전환 대상이 아니다.
 
 2026-09-11 노션 블로그 전환에서는 Argo CD `Synced/Healthy`, 새 이미지의 Pod 준비 상태와 블로그·readiness HTTP 200까지 확인했다. 이후 대체된 `HOMELAB_REGISTRY_USERNAME`, `HOMELAB_REGISTRY_PASSWORD`, `HARNESS_ACTIONS_TOKEN` GitHub Secrets를 삭제했다. 노션 API용 두 Secret은 유지하며, 임시 자격증명 이전 workflow와 암호화 Artifact·개인키는 제거했다.
+
+2026-09-12 Organization 이전에서는 저장소 ID와 `master`·이벤트 제한을 유지하고 SMS 정책의 소유자 ID·workflow 경로를 새 소유자에 맞췄다. [이전 후 블로그 CI](https://github.com/robinjoon-homelab/Notion-Blog/actions/runs/34698273503)에서 새 경로의 `v1.0.0` Action과 실제 OIDC `zot`·`harness` 조회를 확인했다.
+
+하네스 호출 토큰은 `homelab-harness-release-2026-09`이며 리소스 소유자는 `robinjoon-homelab`이다. `Simple-K3S-Herness` 하나의 Actions 읽기·쓰기와 필수 Metadata 읽기만 허용한다. 운영자 선택에 따라 토큰은 만료 없음을 사용하며, 이를 위해 조직의 fine-grained PAT 만료 강제 정책을 해제했다. SMS의 `harness` 객체와 SMS 자체 CI의 GitHub `HARNESS_ACTIONS_TOKEN`에 같은 값을 보관한다. 토큰을 교체할 때는 두 저장 위치를 함께 갱신한다.
+
+같은 이전 검증에서 [SMS CI](https://github.com/robinjoon-homelab/Secret-Manager-System/actions/runs/34698221033), [SMS 릴리스](https://github.com/robinjoon-homelab/Simple-K3S-Herness/actions/runs/34698380432), [블로그 릴리스](https://github.com/robinjoon-homelab/Simple-K3S-Herness/actions/runs/34698480395)도 성공했다. 두 앱의 Git 이미지 태그와 실제 Deployment 이미지가 일치하고 Argo CD가 `Synced/Healthy`이며, 두 readiness와 블로그 접속은 HTTP 200이었다. SMS 교체 중 일시적인 502가 관찰되어 무중단 배포를 보장하는 결과로 해석하지 않는다. 네 실행의 완료 로그에서 등록된 CI 자격증명과 JWT 형태의 평문은 발견되지 않았다.

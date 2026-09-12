@@ -90,7 +90,7 @@ CI 조회 API에는 전체 앱 목록·전체 값 조회나 키별 필터가 없
 
 SMS는 GitHub가 발급한 OIDC JWT의 서명, 발급자, audience, 유효시간과 필수 실행 신원을 검증한다. 고정 발급자는 `https://token.actions.githubusercontent.com`, audience는 `urn:homelab:ci-secrets:v1`이다. 이 audience는 공통 Action의 토큰 요청과 일치해야 한다. JWT에는 비어 있지 않은 `sub`와 시간 클레임 `exp`·`nbf`·`iat`가 있어야 하며, 만료됐거나 아직 유효하지 않거나 미래에 발급된 토큰은 거부한다. 유효하지 않거나 필수 신원 정보가 없는 토큰은 401로 거부한다.
 
-실행 신원에는 `repository_id`, `repository_owner_id`, `ref`, `event_name`, `workflow_ref`가 필요하다. 아래 진입 정책에 등록된 레포 항목 하나에서 두 ID가 모두 일치하고, ref·event·workflow가 각각 해당 허용 목록의 값 중 하나와 일치해야 한다. 정책은 하네스가 관리하는 비밀이 아닌 배포 설정이고, 검증과 정책 적용은 SMS의 책임이다. 필요한 발급자 정보를 확보할 수 없어 신원을 검증하지 못하면 503 `IDENTITY_PROVIDER_UNAVAILABLE`로 실패하며 인증을 생략하지 않는다.
+실행 신원에는 `repository_id`, `repository_owner_id`, `ref`, `event_name`, `workflow_ref`가 필요하다. 아래 진입 정책에 등록된 레포 항목 하나에서 두 ID가 모두 일치하고, ref·event·workflow가 각각 해당 허용 목록의 값 중 하나와 일치해야 한다. 정책은 운영자가 SMS의 직접 관리 경로에서 등록·변경하는 비밀이 아닌 설정이다. 하네스 배포 매니페스트에는 포함하지 않으며, 저장·검증과 정책 적용은 SMS의 책임이다. 필요한 발급자 정보를 확보할 수 없어 신원을 검증하지 못하면 503 `IDENTITY_PROVIDER_UNAVAILABLE`로 실패하며 인증을 생략하지 않는다.
 
 노션 블로그의 진입 정책 예시는 다음과 같다. 소유자 ID와 워크플로 경로는 2026-09-12의 Organization 이전 기준이다. 저장소 ID와 기존 master·이벤트 제한은 유지한다.
 
